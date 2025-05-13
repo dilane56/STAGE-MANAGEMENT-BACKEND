@@ -1,0 +1,58 @@
+package org.kfokam48.stagemanagementbackend.controlleur;
+
+import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
+import org.kfokam48.stagemanagementbackend.dto.OffreStageResponseDTO;
+import org.kfokam48.stagemanagementbackend.service.OffreStageService;
+import org.kfokam48.stagemanagementbackend.service.impl.OffreStageServiceImpl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/offres-stage") // URL de base du contrôleur
+public class OffreStageController {
+
+    private final OffreStageServiceImpl offreStageService;
+
+    public OffreStageController(OffreStageServiceImpl offreStageService) {
+        this.offreStageService = offreStageService;
+    }
+
+
+    // ✅ Récupérer une offre de stage par ID
+    @GetMapping("/{id}")
+    public ResponseEntity<OffreStageResponseDTO> getOffreStageById(@PathVariable Long id) {
+        OffreStageResponseDTO offreStage = offreStageService.getOffreStageById(id);
+        return ResponseEntity.ok(offreStage);
+    }
+
+    // ✅ Créer une nouvelle offre de stage
+    @PostMapping
+    public ResponseEntity<OffreStageResponseDTO> createOffreStage(@RequestBody OffreStageDTO offreStageDTO) {
+        OffreStageResponseDTO offreStage = offreStageService.createOffreStage(offreStageDTO);
+        return ResponseEntity.ok(offreStage);
+    }
+
+    // ✅ Mettre à jour une offre de stage
+    @PutMapping("/{id}")
+    public ResponseEntity<OffreStageResponseDTO> updateOffreStage(
+            @PathVariable Long id,
+            @RequestBody OffreStageDTO offreStageDTO) {
+        OffreStageResponseDTO offreStage = offreStageService.updateOffreStage(id, offreStageDTO);
+        return ResponseEntity.ok(offreStage);
+    }
+
+    // ✅ Supprimer une offre de stage
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteOffreStageById(@PathVariable Long id) {
+        return offreStageService.deleteOffreStageById(id);
+    }
+
+    // ✅ Récupérer toutes les offres de stage
+    @GetMapping
+    public ResponseEntity<List<OffreStageResponseDTO>> getAllOffresStage() {
+        List<OffreStageResponseDTO> offresStage = offreStageService.getAllOffresStage();
+        return ResponseEntity.ok(offresStage);
+    }
+}
