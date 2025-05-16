@@ -47,6 +47,13 @@ public class OffreStageServiceImpl implements OffreStageService {
         return offreStageMapper.offreStageToOffreStageResponseDTO(
                 offreStageRepository.save(offreStageMapper.offreStageDTOToOffreStage(offreStageDTO)));
     }
+    @Override
+    public List<OffreStageResponseDTO> filterOffresStage(String localisation, String duree, String domaine) {
+        List<OffreStage> offres = offreStageRepository.findByLocalisationContainingAndDureeGreaterThanEqualAndDomaineContaining(
+                localisation, duree, domaine);
+
+        return offreStageMapper.offresStageToOffresStageResponseDTOs(offres);
+    }
 
     @Override
     public OffreStageResponseDTO updateOffreStage(Long id, OffreStageDTO offreStageDTO) {

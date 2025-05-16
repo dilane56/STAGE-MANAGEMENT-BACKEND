@@ -10,6 +10,7 @@ public interface OffreStageService {
     public OffreStageResponseDTO getOffreStageById(Long id);
     public ResponseEntity<String> deleteOffreStageById(Long id);
     public OffreStageResponseDTO createOffreStage(OffreStageDTO offreStageDTO);
+    List<OffreStageResponseDTO> filterOffresStage(String localisation, String duree, String domaine);
     public OffreStageResponseDTO updateOffreStage(Long id, OffreStageDTO offreStageDTO);
     public List<OffreStageResponseDTO> getAllOffresStage();
 

@@ -2,7 +2,6 @@ package org.kfokam48.stagemanagementbackend.mapper;
 
 import org.kfokam48.stagemanagementbackend.dto.CandidatureDTO;
 import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
 import org.kfokam48.stagemanagementbackend.dto.OffreStageInCandidatureDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.model.Candidature;
@@ -12,7 +11,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -46,6 +44,7 @@ public class CandidatureMapper {
         candidatureResponseDTO.setDateCandidature(candidature.getDateCandidature());
         candidatureResponseDTO.setEtudiantUsername(candidature.getEtudiant().getUsername());
         candidatureResponseDTO.setOffreStage(modelMapper.map(candidature.getOffreStage(), OffreStageInCandidatureDTO.class));
+        candidatureResponseDTO.setCheminFichier(candidature.getCvPath());
         return candidatureResponseDTO;
 
     }

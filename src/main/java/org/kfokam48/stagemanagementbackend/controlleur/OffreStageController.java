@@ -33,6 +33,19 @@ public class OffreStageController {
         OffreStageResponseDTO offreStage = offreStageService.createOffreStage(offreStageDTO);
         return ResponseEntity.ok(offreStage);
     }
+    @GetMapping("/filtrer")
+    public ResponseEntity<List<OffreStageResponseDTO>> filterOffresStage(
+            @RequestParam(required = false) String localisation,
+            @RequestParam(required = false) String duree,
+            @RequestParam(required = false) String domaine) {
+
+        List<OffreStageResponseDTO> offres = offreStageService.filterOffresStage(
+                localisation != null ? localisation : "",
+                duree != null ? duree : "",
+                domaine != null ? domaine : "");
+
+        return ResponseEntity.ok(offres);
+    }
 
     // ✅ Mettre à jour une offre de stage
     @PutMapping("/{id}")

@@ -26,4 +26,6 @@ public class Candidature {
 
     private String lettreMotivation; // Texte riche
     private LocalDate dateCandidature;
+    @Column(length = 500) // ✅ Définit une limite de 500 caractères
+    private String cvPath;
 }
