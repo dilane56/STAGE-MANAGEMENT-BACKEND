@@ -20,5 +20,4 @@ public class UtilisateurDTO {
     @NotNull(message = "Le username ne doit pas être null")
     @NotBlank(message = "Le username ne doit pas être vide")
     private String username;
-    private Roles role;
 }

@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class ConventionRequestDTO {
     private Long idCandidature;
-    private String pdfConventionPath;
 
 
 }

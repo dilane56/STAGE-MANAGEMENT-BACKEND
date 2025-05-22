@@ -40,15 +40,15 @@ public class ConventionMapper {
         conventionResponseDTO.setDateAprouval(conventionStage.getDateAprouval());
         conventionResponseDTO.setDateCreation(conventionStage.getDateCreation());
         conventionResponseDTO.setDateValidation(conventionStage.getDateValidation());
-        if(conventionStage.getEnseignantValideur() != null) {
+        if(conventionStage.getEnseignantValideur() == null) {
             conventionResponseDTO.setEnseignantName("");
         }else {
-            conventionResponseDTO.setEnseignantName(conventionResponseDTO.getEnseignantName());
+            conventionResponseDTO.setEnseignantName(conventionStage.getEnseignantValideur().getUsername());
         }
-        if(conventionStage.getAprouvalAdministrator() != null) {
+        if(conventionStage.getAprouvalAdministrator() == null) {
             conventionResponseDTO.setAdministratorName("");
         }else{
-            conventionResponseDTO.setAdministratorName(conventionResponseDTO.getAdministratorName());
+            conventionResponseDTO.setAdministratorName(conventionStage.getAprouvalAdministrator().getUsername());
         }
         conventionResponseDTO.setStatutConvention(conventionStage.getStatutConvention());
         CandidatureResponseDTO candidatureResponseDTO = candidatureMapper.candidatureToCandidatureResponseDTO(conventionStage.getCandidature());

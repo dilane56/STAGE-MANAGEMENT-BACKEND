@@ -11,6 +11,7 @@ import org.kfokam48.stagemanagementbackend.model.Candidature;
 import org.kfokam48.stagemanagementbackend.repository.CandidatureRepository;
 import org.kfokam48.stagemanagementbackend.service.impl.CandidatureServiceImpl;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 
 @RestController
@@ -51,20 +54,23 @@ public class CandidatureController {
     }
 
     // ✅ Ajouter une nouvelle candidature
-    @PostMapping(value = "/ajouter", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/ajouter", consumes = "multipart/form-data")
     @Operation(summary = "Ajouter une candidature avec CV")
+    // ✅ Ajouter une candidature avec upload du CV
     public ResponseEntity<CandidatureResponseDTO> addCandidature(
-            @RequestPart("candidature") CandidatureDTO candidatureDTO,
-            @RequestParam("file") MultipartFile file)  {
-        try {
-
-
-            CandidatureResponseDTO candidature = candidatureService.addCandidature(candidatureDTO, file);
-            return ResponseEntity.ok(candidature);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Erreur de traitement des fichiers");
-        }
+            @RequestParam Long idEtudiant,
+            @RequestParam Long idOffre,
+            @RequestParam("cv") MultipartFile file) throws Exception {
+CandidatureDTO candidatureDTO = new CandidatureDTO();
+candidatureDTO.setEtudiantId(idEtudiant);
+candidatureDTO.setOffreStageId(idOffre);
+candidatureDTO.setLettreMotivation("String");
+        CandidatureResponseDTO candidatureResponseDTO = candidatureService.addCandidature(candidatureDTO, file);
+        return ResponseEntity.ok(candidatureResponseDTO);
     }
+
+
+
 
     @PostMapping()
     @Operation(summary = "Ajouter une candidature sans  upload de CV")
@@ -88,31 +94,19 @@ public class CandidatureController {
         return candidatureService.deleteCandidature(id);
     }
 
-    @PostMapping(value = "/upload-cv", consumes = "multipart/form-data")
-    public ResponseEntity<String> uploadCv(@RequestParam("file") MultipartFile file) {
-        try {
-            // Définir le chemin du fichier
-            String filePath = "uploads/" + file.getOriginalFilename();
-            File dest = new File(filePath);
-            file.transferTo(dest); // Sauvegarde du fichier dans le serveur
 
-            return ResponseEntity.ok(filePath); // Retourne le chemin du fichier
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erreur lors de l'upload du CV : " + e.getMessage());
-        }
+    @GetMapping("/downloadCV/{id}/cv")
+    public ResponseEntity<byte[]> getCv(@PathVariable Long id) throws IOException {
+        Candidature candidature = candidatureRepository.findById(id).orElseThrow(()->new RessourceNotFoundException("Candidature non trouvable"));
+        String fileUrl = candidature.getCvPath();
 
-    }
+        InputStream inputStream = new URL(fileUrl.replace("\\", "/")).openStream();
+        byte[] fileBytes = inputStream.readAllBytes();
 
-    @GetMapping("/cv/{id}")
-    public ResponseEntity<Resource> getCv(@PathVariable Long id) throws IOException {
-        Candidature candidature = candidatureRepository.findById(id)
-                .orElseThrow(() -> new RessourceNotFoundException("Candidature not found"));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
 
-        File file = new File(candidature.getCvPath());
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
-                .body((Resource) new InputStreamResource(new FileInputStream(file)));
+        return ResponseEntity.ok().headers(headers).body(fileBytes);
     }
 
 

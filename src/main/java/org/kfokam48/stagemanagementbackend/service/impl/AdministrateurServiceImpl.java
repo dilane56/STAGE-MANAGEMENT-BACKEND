@@ -48,6 +48,7 @@ public class AdministrateurServiceImpl implements AdministrateurService {
             throw new RessourceNotFoundException("User already exists with this username");
         }
         Administrateur administrateur = administrateurMappeur.adminsitrateurDTOToAdministrateur(administrateurDTO);
+        administrateur.setRole(Roles.ADMIN);
         //administrateur.setPassword(passwordEncoder.encode(administrateurDTO.getPassword()));
         administrateurRepository.save(administrateur);
         return administrateurMappeur.administrateurToAdministareurReponseDTO(administrateur);

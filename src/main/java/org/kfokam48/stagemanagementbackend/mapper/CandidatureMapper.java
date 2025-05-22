@@ -30,7 +30,6 @@ public class CandidatureMapper {
         candidature.setDateCandidature(LocalDate.now());
         candidature.setEtudiant(etudiantRepository.findById(candidatureDTO.getEtudiantId())
                 .orElseThrow(() -> new RessourceNotFoundException("Etudiant not found")));
-        candidature.setStatut(candidatureDTO.getStatutCandidature());
         candidature.setOffreStage(offreStageRepository.findById(candidatureDTO.getOffreStageId())
                 .orElseThrow(() -> new RessourceNotFoundException("Offre de stage not found")));
         candidature.setLettreMotivation(candidatureDTO.getLettreMotivation());

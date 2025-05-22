@@ -20,4 +20,5 @@ public interface CandidatureService {
     public CandidatureResponseDTO updateCandidature(Long id, CandidatureDTO candidatureDTO);
     public ResponseEntity<String> deleteCandidature(Long id);
     public  ResponseEntity<String> uploadImage(MultipartFile file, Long id) throws IOException, Exception;
+
 }

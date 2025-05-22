@@ -3,6 +3,7 @@ package org.kfokam48.stagemanagementbackend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;
+import org.kfokam48.stagemanagementbackend.enums.StatutConvention;
 
 import java.time.LocalDate;
 
@@ -26,7 +27,7 @@ public class ConventionStage {
     private Administrateur aprouvalAdministrator;
     @Column(length = 500) // ✅ Définit une limite de 500 caractères
     private String pdfConventionPath; // Chemin du fichier PDF stocké (S3/MinIO)
-    private StatutCandidature statutConvention;
+    private StatutConvention statutConvention;
     private LocalDate DateCreation;
 
     private LocalDate DateValidation;
