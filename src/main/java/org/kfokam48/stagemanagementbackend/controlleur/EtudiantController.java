@@ -5,9 +5,9 @@ package org.kfokam48.stagemanagementbackend.controlleur;
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantDTO;
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantResponseDTO;
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantUpdateDTO;
-import org.kfokam48.stagemanagementbackend.service.Etudiantservice;
 import org.kfokam48.stagemanagementbackend.service.impl.EtudiantserviceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +25,7 @@ public class EtudiantController {
 
     // ✅ Récupérer un étudiant par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     public ResponseEntity<EtudiantResponseDTO> getEtudiantById(@PathVariable Long id) {
         EtudiantResponseDTO etudiant = etudiantService.getEtudiantById(id);
         return ResponseEntity.ok(etudiant);
@@ -32,6 +33,7 @@ public class EtudiantController {
 
     // ✅ Créer un étudiant
     @PostMapping
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     public ResponseEntity<EtudiantResponseDTO> createEtudiant(@RequestBody EtudiantDTO etudiantDTO) {
         EtudiantResponseDTO etudiant = etudiantService.createEtudiant(etudiantDTO);
         return ResponseEntity.ok(etudiant);
@@ -39,6 +41,7 @@ public class EtudiantController {
 
     // ✅ Mettre à jour un étudiant
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     public ResponseEntity<EtudiantResponseDTO> updateEtudiant(
             @PathVariable Long id,
             @RequestBody EtudiantUpdateDTO etudiantUpdateDTO) {
@@ -48,12 +51,14 @@ public class EtudiantController {
 
     // ✅ Supprimer un étudiant
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteEtudiant(@PathVariable Long id) {
         return etudiantService.deleteEtudiant(id);
     }
 
     // ✅ Récupérer tous les étudiants
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EtudiantResponseDTO>> getAllEtudiants() {
         List<EtudiantResponseDTO> etudiants = etudiantService.getAllEtudiants();
         return ResponseEntity.ok(etudiants);

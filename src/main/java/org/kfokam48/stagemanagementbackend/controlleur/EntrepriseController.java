@@ -7,6 +7,7 @@ import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseUpdateDTO;
 import org.kfokam48.stagemanagementbackend.service.EntrepriseService;
 import org.kfokam48.stagemanagementbackend.service.impl.EntrepriseServiceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class EntrepriseController {
 
     // ✅ Récupérer une entreprise par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') ")
     public ResponseEntity<EntrepriseReponseDTO> getEntrepriseById(@PathVariable Long id) {
         EntrepriseReponseDTO entreprise = entrepriseService.getEntrepriseById(id);
         return ResponseEntity.ok(entreprise);
@@ -31,6 +33,7 @@ public class EntrepriseController {
 
     // ✅ Créer une entreprise
     @PostMapping
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<EntrepriseReponseDTO> creerEntreprise(@RequestBody EntrepriseDTO entrepriseDTO) {
         EntrepriseReponseDTO entreprise = entrepriseService.creerEntreprise(entrepriseDTO);
         return ResponseEntity.ok(entreprise);
@@ -38,6 +41,7 @@ public class EntrepriseController {
 
     // ✅ Modifier une entreprise
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<EntrepriseReponseDTO> modifierEntreprise(
             @PathVariable Long id,
             @RequestBody EntrepriseUpdateDTO entrepriseUpdateDTO) {
@@ -47,12 +51,14 @@ public class EntrepriseController {
 
     // ✅ Supprimer une entreprise
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> supprimerEntreprise(@PathVariable Long id) {
         return entrepriseService.supprimerEntreprise(id);
     }
 
     // ✅ Récupérer toutes les entreprises
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EntrepriseReponseDTO>> getAllEntreprises() {
         List<EntrepriseReponseDTO> entreprises = entrepriseService.getAllEntreprises();
         return ResponseEntity.ok(entreprises);

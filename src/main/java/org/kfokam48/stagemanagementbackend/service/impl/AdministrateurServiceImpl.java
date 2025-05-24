@@ -12,6 +12,7 @@ import org.kfokam48.stagemanagementbackend.repository.AdministrateurRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.AdministrateurService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +24,7 @@ public class AdministrateurServiceImpl implements AdministrateurService {
     private final AdministrateurRepository administrateurRepository;
     private final AdministrateurMappeur administrateurMappeur;
     private final UtilisateurRepository utilisateurRepository;
-   // private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
 
     public AdministrateurServiceImpl(AdministrateurRepository administrateurRepository, AdministrateurMappeur administrateurMappeur, UtilisateurRepository utilisateurRepository) {
@@ -49,7 +50,7 @@ public class AdministrateurServiceImpl implements AdministrateurService {
         }
         Administrateur administrateur = administrateurMappeur.adminsitrateurDTOToAdministrateur(administrateurDTO);
         administrateur.setRole(Roles.ADMIN);
-        //administrateur.setPassword(passwordEncoder.encode(administrateurDTO.getPassword()));
+        administrateur.setPassword(passwordEncoder.encode(administrateurDTO.getPassword()));
         administrateurRepository.save(administrateur);
         return administrateurMappeur.administrateurToAdministareurReponseDTO(administrateur);
     }
@@ -71,7 +72,7 @@ public class AdministrateurServiceImpl implements AdministrateurService {
         }
         administrateur.setEmail(administrateurUpdateDTO.getEmail());
         administrateur.setUsername(administrateurUpdateDTO.getUsername());
-        administrateur.setPassword(administrateurUpdateDTO.getPassword());
+        administrateur.setPassword(passwordEncoder.encode(administrateurUpdateDTO.getPassword()));
         administrateur.setTelephone(administrateurUpdateDTO.getTelephone());
         administrateur.setAdresse(administrateurUpdateDTO.getAdresse());
         administrateur.setRole(Roles.ADMIN);

@@ -11,6 +11,7 @@ import org.kfokam48.stagemanagementbackend.repository.EnseignantRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.EnseignantService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,9 @@ public class EnseignantServiceImpl implements EnseignantService {
     private final EnseignantRepository enseignantRepository;
     private final EnseignantMapper enseignantMapper;
     private final UtilisateurRepository utilisateurRepository;
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     public EnseignantServiceImpl(EnseignantRepository enseignantRepository, EnseignantMapper enseignantMapper, UtilisateurRepository utilisateurRepository) {
         this.enseignantRepository = enseignantRepository;
@@ -38,6 +42,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         }
         Enseignant enseignant = enseignantMapper.enseigantDTOToEnseignant(enseignantDTO);
         enseignant.setRole(Roles.ENSEIGNANT);
+        enseignant.setPassword(passwordEncoder().encode(enseignantDTO.getPassword()));
         return enseignantMapper.enseignantToEnseignantResponseDTO(enseignantRepository.save(enseignant));
     }
 
@@ -77,7 +82,7 @@ public class EnseignantServiceImpl implements EnseignantService {
         enseignant.setSpecialite(enseignantUpdateDTO.getSpecialite());
         enseignant.setUsername(enseignantUpdateDTO.getUsername());
         enseignant.setEmail(enseignantUpdateDTO.getEmail());
-        enseignant.setPassword(enseignantUpdateDTO.getPassword());
+        enseignant.setPassword(passwordEncoder().encode(enseignantUpdateDTO.getPassword()));
         enseignantRepository.save(enseignant);
         return enseignantMapper.enseignantToEnseignantResponseDTO(enseignant);
     }

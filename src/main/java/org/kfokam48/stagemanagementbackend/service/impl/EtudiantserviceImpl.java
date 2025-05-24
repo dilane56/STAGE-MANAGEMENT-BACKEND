@@ -11,6 +11,7 @@ import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.Etudiantservice;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,9 @@ public class EtudiantserviceImpl implements Etudiantservice {
     private final EtudiantRepository etudiantRepository;
     private final EtudiantMapper etudiantMapper;
     private final UtilisateurRepository utilisateurRepository;
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     public EtudiantserviceImpl(EtudiantRepository etudiantRepository, EtudiantMapper etudiantMapper, UtilisateurRepository utilisateurRepository) {
         this.etudiantRepository = etudiantRepository;
@@ -39,6 +43,7 @@ public class EtudiantserviceImpl implements Etudiantservice {
         }
         Etudiant etudiant = etudiantMapper.etudiantDtoToEtudiant(etudiantDTO);
         etudiant.setRole(Roles.ETUDIANT);
+        etudiant.setPassword(passwordEncoder().encode(etudiantDTO.getPassword()));
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiantRepository.save(etudiant));
     }
 
@@ -79,7 +84,7 @@ public class EtudiantserviceImpl implements Etudiantservice {
         etudiant.setFiliere(etudiantUpdateDTO.getFiliere());
         etudiant.setNiveau(etudiantUpdateDTO.getNiveau());
         etudiant.setAdresse(etudiantUpdateDTO.getAdresse());
-        etudiant.setPassword(etudiantUpdateDTO.getPassword());
+        etudiant.setPassword(passwordEncoder().encode(etudiantUpdateDTO.getPassword()));
         etudiantRepository.save(etudiant);
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiant);
     }

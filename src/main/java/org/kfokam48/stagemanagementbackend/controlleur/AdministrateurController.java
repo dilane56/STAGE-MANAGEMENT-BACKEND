@@ -5,6 +5,7 @@ import org.kfokam48.stagemanagementbackend.dto.administrateur.AdministrateurResp
 import org.kfokam48.stagemanagementbackend.dto.administrateur.AdministrateurUpdateDTO;
 import org.kfokam48.stagemanagementbackend.service.impl.AdministrateurServiceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class AdministrateurController {
 
     // ✅ Récupérer un administrateur par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Accès pour les rôles ADMIN
     public ResponseEntity<AdministrateurResponseDTO> getAdministrateurById(@PathVariable Long id) {
         AdministrateurResponseDTO administrateur = administrateurService.getAdministrateurById(id);
         return ResponseEntity.ok(administrateur);
@@ -30,6 +32,7 @@ public class AdministrateurController {
 
     // ✅ Créer un administrateur
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')") // Accès pour les rôles ADMIN
     public ResponseEntity<AdministrateurResponseDTO> createAdministrateur(@RequestBody AdministrateurDTO administrateurDTO) {
         AdministrateurResponseDTO administrateur = administrateurService.createAdministrateur(administrateurDTO);
         return ResponseEntity.ok(administrateur);
@@ -37,6 +40,7 @@ public class AdministrateurController {
 
     // ✅ Mettre à jour un administrateur
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Accès pour les rôles ADMIN
     public ResponseEntity<AdministrateurResponseDTO> updateAdministrateur(
             @PathVariable Long id,
             @RequestBody AdministrateurUpdateDTO administrateurUpdateDTO) {
@@ -46,12 +50,14 @@ public class AdministrateurController {
 
     // ✅ Supprimer un administrateur
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // Accès pour les rôles ADMIN
     public ResponseEntity<String> deleteAdministrateur(@PathVariable Long id) {
         return administrateurService.deleteAdministrateur(id);
     }
 
     // ✅ Récupérer tous les administrateurs
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')") // Accès pour les rôles ADMIN
     public ResponseEntity<List<AdministrateurResponseDTO>> getAllAdministrateurs() {
         List<AdministrateurResponseDTO> administrateurs = administrateurService.getAllAdministrateurs();
         return ResponseEntity.ok(administrateurs);

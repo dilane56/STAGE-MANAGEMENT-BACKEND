@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -40,6 +41,7 @@ public class CandidatureController {
 
 
     // ✅ Récupérer une candidature par ID
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<CandidatureResponseDTO> getCandidatureById(@PathVariable Long id) {
         CandidatureResponseDTO candidature = candidatureService.getCandidatureById(id);
@@ -47,6 +49,7 @@ public class CandidatureController {
     }
 
     // ✅ Récupérer toutes les candidatures
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<CandidatureResponseDTO>> getAllCandidatures() {
         List<CandidatureResponseDTO> candidatures = candidatureService.getAllCandidatures();
@@ -56,6 +59,7 @@ public class CandidatureController {
     // ✅ Ajouter une nouvelle candidature
     @PostMapping(value = "/ajouter", consumes = "multipart/form-data")
     @Operation(summary = "Ajouter une candidature avec CV")
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     // ✅ Ajouter une candidature avec upload du CV
     public ResponseEntity<CandidatureResponseDTO> addCandidature(
             @RequestParam Long idEtudiant,
@@ -81,6 +85,7 @@ candidatureDTO.setLettreMotivation("String");
 
     // ✅ Mettre à jour une candidature
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     public ResponseEntity<CandidatureResponseDTO> updateCandidature(
             @PathVariable Long id,
             @RequestBody CandidatureDTO candidatureDTO) {
@@ -90,6 +95,7 @@ candidatureDTO.setLettreMotivation("String");
 
     // ✅ Supprimer une candidature
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteCandidature(@PathVariable Long id) {
         return candidatureService.deleteCandidature(id);
     }
@@ -118,6 +124,7 @@ candidatureDTO.setLettreMotivation("String");
     }
 
     @PutMapping("/{id}/statut")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<String> updateCandidatureStatut(
             @PathVariable Long id,
             @RequestParam String statut) throws IOException {

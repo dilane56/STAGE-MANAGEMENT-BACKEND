@@ -3,6 +3,7 @@ import org.kfokam48.stagemanagementbackend.dto.convention.ConventionRequestDTO;
 import org.kfokam48.stagemanagementbackend.dto.convention.ConventionResponseDTO;
 import org.kfokam48.stagemanagementbackend.service.ConventionService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +21,7 @@ public class ConventionController {
 
     // ✅ Récupérer une convention par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<ConventionResponseDTO> findByConventionId(@PathVariable Long id) {
         ConventionResponseDTO convention = conventionService.findByConventionId(id);
         return ResponseEntity.ok(convention);
@@ -27,6 +29,7 @@ public class ConventionController {
 
     // ✅ Ajouter une nouvelle convention avec upload du PDF
     @PostMapping(value = "/ajouter", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<ConventionResponseDTO> createConvention(
             @RequestParam("candidature-id") Long idCandidature,
             @RequestParam("pdf") MultipartFile file) throws Exception {
@@ -38,6 +41,7 @@ public class ConventionController {
 
     // ✅ Mettre à jour une convention avec un nouveau fichier PDF
     @PutMapping(value = "/{id}/modifier", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<ConventionResponseDTO> updateConvention(
             @PathVariable Long id,
             @RequestParam("candidature-id") Long CandidatureId,
@@ -50,6 +54,7 @@ public class ConventionController {
 
     // ✅ Supprimer une convention
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteConvention(@PathVariable Long id) {
         String message = conventionService.deleteConvention(id);
         return ResponseEntity.ok(message);
@@ -57,6 +62,7 @@ public class ConventionController {
 
     // ✅ Récupérer toutes les conventions
     @GetMapping
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<List<ConventionResponseDTO>> findAllConventions() {
         List<ConventionResponseDTO> conventions = conventionService.findAllConventions();
         return ResponseEntity.ok(conventions);
@@ -64,6 +70,7 @@ public class ConventionController {
 
     // ✅ Valider une convention par un enseignant
     @PutMapping("/{id}/valider-enseignant/{enseignantId}")
+    @PreAuthorize("hasRole('ENSEIGNANT')")
     public ResponseEntity<ConventionResponseDTO> validateConventionByEnseignant(
             @PathVariable Long id, @PathVariable Long enseignantId) throws Exception {
 
@@ -73,6 +80,7 @@ public class ConventionController {
 
     // ✅ Approuver une convention par un administrateur
     @PutMapping("/{id}/approuver-administrateur/{adminId}")
+    @PreAuthorize(" hasRole('ADMIN')")
     public ResponseEntity<ConventionResponseDTO> approuveConventionByAdministrator(
             @PathVariable Long id, @PathVariable Long adminId) throws Exception {
 

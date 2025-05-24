@@ -11,6 +11,7 @@ import org.kfokam48.stagemanagementbackend.repository.EntrepriseRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.EntrepriseService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,9 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     private final EntrepriseRepository entrepriseRepository;
     private final EntrepriseMapper entrepriseMapper;
     private final UtilisateurRepository utilisateurRepository;
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     public EntrepriseServiceImpl(EntrepriseRepository entrepriseRepository, EntrepriseMapper entrepriseMapper, UtilisateurRepository utilisateurRepository) {
         this.entrepriseRepository = entrepriseRepository;
@@ -48,6 +52,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         Entreprise entreprise = entrepriseMapper.entrepriseDTOToEntreprise(entrepriseDTO);
         System.out.println(entreprise);
         entreprise.setRole(Roles.ENTREPRISE);
+        entreprise.setPassword(passwordEncoder().encode(entrepriseDTO.getPassword()));
 
         return entrepriseMapper.entrepriseToEntrepriseReponseDTO(entrepriseRepository.save(entreprise));
     }
@@ -72,7 +77,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         entreprise.setDescription(entrepriseUpdateDTO.getDescription());
         entreprise.setEmail(entrepriseUpdateDTO.getEmail());
         entreprise.setUsername(entrepriseUpdateDTO.getUsername());
-        entreprise.setPassword(entrepriseUpdateDTO.getPassword());
+        entreprise.setPassword(passwordEncoder().encode(entrepriseUpdateDTO.getPassword()));
         entreprise.setRole(Roles.ENTREPRISE);
         entreprise.setTelephone(entrepriseUpdateDTO.getTelephone());
         entreprise.setAdresse(entrepriseUpdateDTO.getAdresse());

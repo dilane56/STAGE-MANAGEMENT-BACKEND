@@ -2,9 +2,9 @@ package org.kfokam48.stagemanagementbackend.controlleur;
 
 import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
 import org.kfokam48.stagemanagementbackend.dto.OffreStageResponseDTO;
-import org.kfokam48.stagemanagementbackend.service.OffreStageService;
 import org.kfokam48.stagemanagementbackend.service.impl.OffreStageServiceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +22,7 @@ public class OffreStageController {
 
     // ✅ Récupérer une offre de stage par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT')")
     public ResponseEntity<OffreStageResponseDTO> getOffreStageById(@PathVariable Long id) {
         OffreStageResponseDTO offreStage = offreStageService.getOffreStageById(id);
         return ResponseEntity.ok(offreStage);
@@ -29,11 +30,13 @@ public class OffreStageController {
 
     // ✅ Créer une nouvelle offre de stage
     @PostMapping
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<OffreStageResponseDTO> createOffreStage(@RequestBody OffreStageDTO offreStageDTO) {
         OffreStageResponseDTO offreStage = offreStageService.createOffreStage(offreStageDTO);
         return ResponseEntity.ok(offreStage);
     }
     @GetMapping("/filtrer")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT')")
     public ResponseEntity<List<OffreStageResponseDTO>> filterOffresStage(
             @RequestParam(required = false) String localisation,
             @RequestParam(required = false) String duree,
@@ -49,6 +52,7 @@ public class OffreStageController {
 
     // ✅ Mettre à jour une offre de stage
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<OffreStageResponseDTO> updateOffreStage(
             @PathVariable Long id,
             @RequestBody OffreStageDTO offreStageDTO) {
@@ -58,12 +62,14 @@ public class OffreStageController {
 
     // ✅ Supprimer une offre de stage
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteOffreStageById(@PathVariable Long id) {
         return offreStageService.deleteOffreStageById(id);
     }
 
     // ✅ Récupérer toutes les offres de stage
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ETUDIANT')")
     public ResponseEntity<List<OffreStageResponseDTO>> getAllOffresStage() {
         List<OffreStageResponseDTO> offresStage = offreStageService.getAllOffresStage();
         return ResponseEntity.ok(offresStage);

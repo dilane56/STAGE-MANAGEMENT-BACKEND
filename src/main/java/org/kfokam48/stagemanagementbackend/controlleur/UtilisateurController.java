@@ -4,6 +4,7 @@ package org.kfokam48.stagemanagementbackend.controlleur;
 import org.kfokam48.stagemanagementbackend.dto.UtilisateurResponseDTO;
 import org.kfokam48.stagemanagementbackend.service.UtilisateurService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class UtilisateurController {
 
     // ✅ Récupérer un utilisateur par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurResponseDTO> getUtilisateurById(@PathVariable Long id) {
         UtilisateurResponseDTO utilisateur = utilisateurService.getUtilisateurById(id);
         return ResponseEntity.ok(utilisateur);
@@ -27,6 +29,7 @@ public class UtilisateurController {
 
     // ✅ Récupérer un utilisateur par nom d'utilisateur
     @GetMapping("/username/{username}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurResponseDTO> getUtilisateurByUsername(@PathVariable String username) {
         UtilisateurResponseDTO utilisateur = utilisateurService.getUtilisateurByUsername(username);
         return ResponseEntity.ok(utilisateur);
@@ -34,6 +37,7 @@ public class UtilisateurController {
 
     // ✅ Récupérer un utilisateur par email
     @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UtilisateurResponseDTO> getUtilisateurByEmail(@PathVariable String email) {
         UtilisateurResponseDTO utilisateur = utilisateurService.getUtilisateurByEmail(email);
         return ResponseEntity.ok(utilisateur);
@@ -41,6 +45,7 @@ public class UtilisateurController {
 
     // ✅ Récupérer la liste des utilisateurs
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UtilisateurResponseDTO>> getAllUtilisateurs() {
         List<UtilisateurResponseDTO> utilisateurs = utilisateurService.getAllUtilisateurs();
         return ResponseEntity.ok(utilisateurs);
@@ -48,18 +53,21 @@ public class UtilisateurController {
 
     // ✅ Supprimer un utilisateur par ID
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteUtilisateurById(@PathVariable Long id) {
         return utilisateurService.deleteUtilisateurById(id);
     }
 
     // ✅ Vérifier si un email existe
     @GetMapping("/exists/email/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Boolean> existsByEmail(@PathVariable String email) {
         return ResponseEntity.ok(utilisateurService.existsByEmail(email));
     }
 
     // ✅ Vérifier si un nom d'utilisateur existe
     @GetMapping("/exists/username/{username}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Boolean> existsByUsername(@PathVariable String username) {
         return ResponseEntity.ok(utilisateurService.existsByUsername(username));
     }

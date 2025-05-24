@@ -4,6 +4,7 @@ import org.kfokam48.stagemanagementbackend.dto.enseigant.EnseignantResponseDTO;
 import org.kfokam48.stagemanagementbackend.dto.enseigant.EnseignantUpdateDTO;
 import org.kfokam48.stagemanagementbackend.service.impl.EnseignantServiceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class EnseignantController {
 
     // ✅ Récupérer un enseignant par ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')") // Accès pour les rôles ADMIN
     public ResponseEntity<EnseignantResponseDTO> getEnseignantById(@PathVariable Long id) {
         EnseignantResponseDTO enseignant = enseignantService.getEnseignantById(id);
         return ResponseEntity.ok(enseignant);
@@ -28,6 +30,7 @@ public class EnseignantController {
 
     // ✅ Créer un enseignant
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')") // Accès pour les rôles ADMIN
     public ResponseEntity<EnseignantResponseDTO> createEnseignant(@RequestBody EnseignantDTO enseignantDTO) {
         EnseignantResponseDTO enseignant = enseignantService.createEnseignant(enseignantDTO);
         return ResponseEntity.ok(enseignant);
@@ -35,6 +38,7 @@ public class EnseignantController {
 
     // ✅ Mettre à jour un enseignant
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ADMIN')")
     public ResponseEntity<EnseignantResponseDTO> updateEnseignant(
             @PathVariable Long id,
             @RequestBody EnseignantUpdateDTO enseignantUpdateDTO) {
@@ -44,12 +48,14 @@ public class EnseignantController {
 
     // ✅ Supprimer un enseignant
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteEnseignant(@PathVariable Long id) {
         return enseignantService.deleteEnseignant(id);
     }
 
     // ✅ Récupérer tous les enseignants
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EnseignantResponseDTO>> getAllEnseignants() {
         List<EnseignantResponseDTO> enseignants = enseignantService.getAllEnseignants();
         return ResponseEntity.ok(enseignants);
