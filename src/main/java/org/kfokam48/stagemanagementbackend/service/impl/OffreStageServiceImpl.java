@@ -1,17 +1,19 @@
 package org.kfokam48.stagemanagementbackend.service.impl;
 
-import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageResponseDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.OffreStageMapper;
 import org.kfokam48.stagemanagementbackend.model.OffreStage;
 import org.kfokam48.stagemanagementbackend.repository.EntrepriseRepository;
 import org.kfokam48.stagemanagementbackend.repository.OffreStageRepository;
+import org.kfokam48.stagemanagementbackend.repository.SecteurRepository;
 import org.kfokam48.stagemanagementbackend.service.OffreStageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 @Service
 @Transactional
@@ -19,11 +21,13 @@ public class OffreStageServiceImpl implements OffreStageService {
     private final OffreStageRepository offreStageRepository;
     private final OffreStageMapper offreStageMapper;
     private final EntrepriseRepository entrepriseRepository;
+    private final SecteurRepository secteurRepository;
 
-    public OffreStageServiceImpl(OffreStageRepository offreStageRepository, OffreStageMapper offreStageMapper, EntrepriseRepository entrepriseRepository) {
+    public OffreStageServiceImpl(OffreStageRepository offreStageRepository, OffreStageMapper offreStageMapper, EntrepriseRepository entrepriseRepository, SecteurRepository secteurRepository) {
         this.offreStageRepository = offreStageRepository;
         this.offreStageMapper = offreStageMapper;
         this.entrepriseRepository = entrepriseRepository;
+        this.secteurRepository = secteurRepository;
     }
 
     @Override
@@ -48,9 +52,8 @@ public class OffreStageServiceImpl implements OffreStageService {
                 offreStageRepository.save(offreStageMapper.offreStageDTOToOffreStage(offreStageDTO)));
     }
     @Override
-    public List<OffreStageResponseDTO> filterOffresStage(String localisation, String duree, String domaine) {
-        List<OffreStage> offres = offreStageRepository.findByLocalisationContainingAndDureeGreaterThanEqualAndDomaineContaining(
-                localisation, duree, domaine);
+    public List<OffreStageResponseDTO> filterOffresStage(String localisation, String duree, String secteurNom) {
+        List<OffreStage> offres = offreStageRepository.filtrer(localisation, duree, secteurNom);
 
         return offreStageMapper.offresStageToOffresStageResponseDTOs(offres);
     }
@@ -64,7 +67,8 @@ public class OffreStageServiceImpl implements OffreStageService {
         }
         offreStage.setIntitule(offreStageDTO.getIntitule());
         offreStage.setDescription(offreStageDTO.getDescription());
-        offreStage.setDomaine(offreStageDTO.getDomaine());
+        offreStage.setSecteur(secteurRepository.findById(offreStageDTO.getSecteurId()).orElseThrow(()-> new RessourceNotFoundException("Secteur not Found")));
+        offreStage.setCompetences(offreStageDTO.getCompetences());
         offreStage.setLocalisation(offreStageDTO.getLocalisation());
         offreStage.setDuree(offreStageDTO.getDuree());
         offreStage.setEntreprise(entrepriseRepository.findById(offreStageDTO.getEntrepriseId())
@@ -76,5 +80,15 @@ public class OffreStageServiceImpl implements OffreStageService {
     @Override
     public List<OffreStageResponseDTO> getAllOffresStage() {
         return offreStageMapper.offresStageToOffresStageResponseDTOs(offreStageRepository.findAll());
+    }
+
+    @Override
+    public OffreStageResponseDTO addCompetence(String competence, Long id) {
+        OffreStage offreStage = offreStageRepository.findById(id)
+                .orElseThrow(() -> new RessourceNotFoundException("Offre de stage not found"));
+        offreStage.getCompetences().add(competence);
+        offreStageRepository.save(offreStage);
+        return offreStageMapper.offreStageToOffreStageResponseDTO(offreStage);
+
     }
 }

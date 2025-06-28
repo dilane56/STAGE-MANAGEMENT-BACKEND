@@ -1,7 +1,7 @@
 package org.kfokam48.stagemanagementbackend.service;
 
-import org.kfokam48.stagemanagementbackend.dto.CandidatureDTO;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 

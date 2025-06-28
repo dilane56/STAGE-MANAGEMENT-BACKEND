@@ -1,10 +1,9 @@
-package org.kfokam48.stagemanagementbackend.dto;
+package org.kfokam48.stagemanagementbackend.dto.candidature;
 
 import lombok.Data;
 import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 @Data
 public class CandidatureResponseDTO {

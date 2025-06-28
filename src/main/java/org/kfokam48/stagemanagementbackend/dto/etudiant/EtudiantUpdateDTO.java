@@ -1,7 +1,7 @@
 package org.kfokam48.stagemanagementbackend.dto.etudiant;
 
 import lombok.Data;
-import org.kfokam48.stagemanagementbackend.dto.UtilisateurDTO;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurDTO;
 @Data
 public class EtudiantUpdateDTO extends UtilisateurDTO {
     private String filiere;

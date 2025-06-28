@@ -1,7 +1,7 @@
 package org.kfokam48.stagemanagementbackend.dto.convention;
 
 import lombok.Data;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.kfokam48.stagemanagementbackend.enums.StatutConvention;
 
 import java.time.LocalDate;

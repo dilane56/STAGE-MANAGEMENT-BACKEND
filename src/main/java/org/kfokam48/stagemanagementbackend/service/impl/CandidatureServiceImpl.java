@@ -1,8 +1,8 @@
 package org.kfokam48.stagemanagementbackend.service.impl;
 
 import jakarta.transaction.Transactional;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureDTO;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;
 import org.kfokam48.stagemanagementbackend.exception.ResourceAlreadyExistException;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
@@ -14,12 +14,10 @@ import org.kfokam48.stagemanagementbackend.repository.CandidatureRepository;
 import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;
 import org.kfokam48.stagemanagementbackend.repository.OffreStageRepository;
 import org.kfokam48.stagemanagementbackend.service.CandidatureService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;

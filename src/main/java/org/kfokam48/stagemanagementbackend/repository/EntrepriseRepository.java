@@ -1,6 +1,6 @@
 package org.kfokam48.stagemanagementbackend.repository;
 
-import jakarta.persistence.Id;
+
 import org.kfokam48.stagemanagementbackend.model.Entreprise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

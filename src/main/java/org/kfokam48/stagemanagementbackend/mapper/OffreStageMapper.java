@@ -1,11 +1,12 @@
 package org.kfokam48.stagemanagementbackend.mapper;
 
-import org.kfokam48.stagemanagementbackend.dto.CandidatureInOffreStageDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.CandidatureInOffreStageDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageResponseDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.model.OffreStage;
 import org.kfokam48.stagemanagementbackend.repository.EntrepriseRepository;
+import org.kfokam48.stagemanagementbackend.repository.SecteurRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
@@ -15,17 +16,20 @@ import java.util.List;
 public class OffreStageMapper {
     private final ModelMapper modelMapper;
     private final EntrepriseRepository entrepriseRepository;
+    private final SecteurRepository secteurRepository;
 
-    public OffreStageMapper(ModelMapper modelMapper, EntrepriseRepository entrepriseRepository) {
+    public OffreStageMapper(ModelMapper modelMapper, EntrepriseRepository entrepriseRepository, SecteurRepository secteurRepository) {
         this.modelMapper = modelMapper;
         this.entrepriseRepository = entrepriseRepository;
+        this.secteurRepository = secteurRepository;
     }
 
     public OffreStage offreStageDTOToOffreStage(OffreStageDTO offreStageDTO) {
        OffreStage offreStage = new OffreStage();
         offreStage.setDescription(offreStageDTO.getDescription());
         offreStage.setDuree(offreStageDTO.getDuree());
-       offreStage.setDomaine(offreStageDTO.getDomaine());
+        offreStage.setSecteur(secteurRepository.findById(offreStageDTO.getSecteurId()).orElseThrow(()->new RessourceNotFoundException("Secteur not found")));
+        offreStage.setCompetences(offreStageDTO.getCompetences());
        offreStage.setEntreprise(entrepriseRepository.findById(offreStageDTO.getEntrepriseId())
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found")));
        offreStage.setIntitule(offreStageDTO.getIntitule());
@@ -38,7 +42,8 @@ public class OffreStageMapper {
         offreStageResponseDTO.setId(offreStage.getId());
         offreStageResponseDTO.setIntitule(offreStage.getIntitule());
         offreStageResponseDTO.setDescription(offreStage.getDescription());
-        offreStageResponseDTO.setDomaine(offreStage.getDomaine());
+        offreStageResponseDTO.setSecteurName(offreStage.getSecteur().getNomSecteur());
+        offreStageResponseDTO.setCompetences(offreStage.getCompetences());
         offreStageResponseDTO.setLocalisation(offreStage.getLocalisation());
         offreStageResponseDTO.setDuree(offreStage.getDuree());
         offreStageResponseDTO.setNomEntreprise(offreStage.getEntreprise().getNomEntreprise());

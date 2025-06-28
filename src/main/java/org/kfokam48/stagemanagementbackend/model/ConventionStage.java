@@ -16,17 +16,17 @@ public class ConventionStage {
 
     @OneToOne
     @JoinColumn(name = "candidature_id", nullable = false)
-    private Candidature candidature; // Liée à une candidature acceptée
+    private Candidature candidature;
 
     @ManyToOne
     @JoinColumn(name = "enseignant_id" , nullable = true)
-    private Enseignant enseignantValideur; // Enseignant qui valide la convention
+    private Enseignant enseignantValideur;
 
     @ManyToOne
     @JoinColumn(name = "administrateur_id", nullable = true)
     private Administrateur aprouvalAdministrator;
-    @Column(length = 500) // ✅ Définit une limite de 500 caractères
-    private String pdfConventionPath; // Chemin du fichier PDF stocké (S3/MinIO)
+    @Column(length = 500)
+    private String pdfConventionPath;
     private StatutConvention statutConvention;
     private LocalDate DateCreation;
 

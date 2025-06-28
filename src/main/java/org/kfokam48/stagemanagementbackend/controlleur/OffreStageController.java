@@ -1,7 +1,9 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 
-import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.CompetenceAddDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageResponseDTO;
+import org.kfokam48.stagemanagementbackend.model.OffreStage;
 import org.kfokam48.stagemanagementbackend.service.impl.OffreStageServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -73,5 +75,11 @@ public class OffreStageController {
     public ResponseEntity<List<OffreStageResponseDTO>> getAllOffresStage() {
         List<OffreStageResponseDTO> offresStage = offreStageService.getAllOffresStage();
         return ResponseEntity.ok(offresStage);
+    }
+
+    @PostMapping("/{id}/competences")
+    public ResponseEntity<OffreStageResponseDTO> addCompetence(@PathVariable Long id, @RequestBody CompetenceAddDTO dto) {
+        OffreStageResponseDTO updated = offreStageService.addCompetence( dto.getNomCompetence(), id);
+        return ResponseEntity.ok(updated);
     }
 }

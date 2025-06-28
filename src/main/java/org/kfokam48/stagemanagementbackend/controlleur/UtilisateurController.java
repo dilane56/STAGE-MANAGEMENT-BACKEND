@@ -1,7 +1,7 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 
 
-import org.kfokam48.stagemanagementbackend.dto.UtilisateurResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurResponseDTO;
 import org.kfokam48.stagemanagementbackend.service.UtilisateurService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

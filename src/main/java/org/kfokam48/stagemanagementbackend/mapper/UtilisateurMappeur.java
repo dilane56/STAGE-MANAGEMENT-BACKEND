@@ -1,7 +1,7 @@
 package org.kfokam48.stagemanagementbackend.mapper;
 
-import org.kfokam48.stagemanagementbackend.dto.UtilisateurDTO;
-import org.kfokam48.stagemanagementbackend.dto.UtilisateurResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurDTO;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurResponseDTO;
 import org.kfokam48.stagemanagementbackend.model.Utilisateur;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;

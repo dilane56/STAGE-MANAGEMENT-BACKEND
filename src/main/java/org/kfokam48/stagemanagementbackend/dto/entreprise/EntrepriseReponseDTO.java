@@ -1,9 +1,8 @@
 package org.kfokam48.stagemanagementbackend.dto.entreprise;
 
 import lombok.Data;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageInEntrepriseDTO;
-import org.kfokam48.stagemanagementbackend.dto.UtilisateurResponseDTO;
-import org.kfokam48.stagemanagementbackend.model.OffreStage;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageInEntrepriseDTO;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurResponseDTO;
 
 import java.util.List;
 @Data

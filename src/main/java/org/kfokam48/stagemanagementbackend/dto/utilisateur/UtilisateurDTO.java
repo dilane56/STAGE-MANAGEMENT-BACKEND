@@ -1,11 +1,10 @@
-package org.kfokam48.stagemanagementbackend.dto;
+package org.kfokam48.stagemanagementbackend.dto.utilisateur;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.kfokam48.stagemanagementbackend.enums.Roles;
 
 @Data
 @NoArgsConstructor

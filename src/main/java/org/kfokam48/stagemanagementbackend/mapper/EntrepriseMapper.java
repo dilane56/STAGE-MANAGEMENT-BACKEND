@@ -1,10 +1,9 @@
 package org.kfokam48.stagemanagementbackend.mapper;
 
-import org.kfokam48.stagemanagementbackend.dto.OffreStageInEntrepriseDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageInEntrepriseDTO;
 import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseDTO;
 import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseReponseDTO;
 import org.kfokam48.stagemanagementbackend.model.Entreprise;
-import org.kfokam48.stagemanagementbackend.repository.OffreStageRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 

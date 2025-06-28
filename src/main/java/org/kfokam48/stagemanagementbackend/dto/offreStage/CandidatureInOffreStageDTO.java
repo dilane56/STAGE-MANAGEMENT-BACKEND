@@ -1,4 +1,4 @@
-package org.kfokam48.stagemanagementbackend.dto;
+package org.kfokam48.stagemanagementbackend.dto.offreStage;
 
 import lombok.Data;
 import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;

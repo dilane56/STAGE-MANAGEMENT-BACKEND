@@ -1,6 +1,6 @@
 package org.kfokam48.stagemanagementbackend.service;
 
-import org.kfokam48.stagemanagementbackend.dto.UtilisateurResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurResponseDTO;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;

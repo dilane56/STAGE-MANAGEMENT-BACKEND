@@ -21,5 +21,5 @@ public abstract class Utilisateur {
     private String adresse;
 
     @Enumerated(EnumType.STRING)
-    private Roles role; // Enumération des rôles
+    private Roles role;
 }

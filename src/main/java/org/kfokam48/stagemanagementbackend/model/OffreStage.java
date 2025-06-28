@@ -16,13 +16,19 @@ public class OffreStage {
 
     private String intitule;
     private String description;
-    private String domaine;
     private String localisation;
-    private String duree; // en mois
+    private String duree;
+    @ElementCollection
+    @CollectionTable(name = "offre_competences", joinColumns = @JoinColumn(name = "offre_id"))
+    @Column(name = "competence")
+    private List<String> competences=new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "secteur_id")
+    private Secteur secteur;
 
     @ManyToOne
   //  @JoinColumn(name = "entreprise_id")
-    private Entreprise entreprise; // L'entreprise qui publie l'offre
+    private Entreprise entreprise;
 
     @OneToMany(mappedBy = "offreStage")
     private List<Candidature> candidatures = new ArrayList<>();

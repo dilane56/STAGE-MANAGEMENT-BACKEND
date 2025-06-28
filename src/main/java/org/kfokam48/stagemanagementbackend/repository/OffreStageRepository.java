@@ -1,18 +1,29 @@
 package org.kfokam48.stagemanagementbackend.repository;
 
 import org.kfokam48.stagemanagementbackend.model.OffreStage;
+import org.kfokam48.stagemanagementbackend.model.Secteur;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
 public interface OffreStageRepository extends JpaRepository<OffreStage, Long> {
-    // Custom query methods can be defined here if needed
-    // For example, to find all offers by a specific company:
-    // List<OffreStage> findByEntrepriseId(Long entrepriseId);
-    // Filtrer les offres par localisation, durée et domaine
-    List<OffreStage> findByLocalisationContainingAndDureeGreaterThanEqualAndDomaineContaining(
-            String localisation, String duree, String domaine);
+
+    // Filtrer les offres par localisation, durée et secteur
+    @Query("SELECT o FROM OffreStage o WHERE " +
+            "(:localisation IS NULL OR LOWER(o.localisation) LIKE LOWER(CONCAT('%', :localisation, '%'))) AND " +
+            "(:duree IS NULL OR LOWER(o.duree) LIKE LOWER(CONCAT('%', :duree, '%'))) AND " +
+            "(:secteurNom IS NULL OR LOWER(o.secteur.nomSecteur) LIKE LOWER(CONCAT('%', :secteurNom, '%')))")
+    List<OffreStage> filtrer(
+            @Param("localisation") String localisation,
+            @Param("duree") String duree,
+            @Param("secteurNom") String secteurNom
+    );
+    List<OffreStage> findOffreStageBySecteur(Secteur secteur);
+
+
 
 }

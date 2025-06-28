@@ -1,10 +1,7 @@
-package org.kfokam48.stagemanagementbackend.dto;
+package org.kfokam48.stagemanagementbackend.dto.candidature;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;
-
-import java.time.LocalDate;
 
 @Data
 public class CandidatureDTO {

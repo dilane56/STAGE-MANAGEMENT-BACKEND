@@ -1,8 +1,8 @@
 package org.kfokam48.stagemanagementbackend.mapper;
 
-import org.kfokam48.stagemanagementbackend.dto.CandidatureDTO;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageInCandidatureDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.OffreStageInCandidatureDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.model.Candidature;
 import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;

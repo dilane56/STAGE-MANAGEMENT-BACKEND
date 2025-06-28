@@ -1,6 +1,6 @@
 package org.kfokam48.stagemanagementbackend.mapper;
 
-import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.kfokam48.stagemanagementbackend.dto.convention.ConventionRequestDTO;
 import org.kfokam48.stagemanagementbackend.dto.convention.ConventionResponseDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;

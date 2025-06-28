@@ -1,7 +1,7 @@
 package org.kfokam48.stagemanagementbackend.service;
 
-import org.kfokam48.stagemanagementbackend.dto.OffreStageDTO;
-import org.kfokam48.stagemanagementbackend.dto.OffreStageResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageDTO;
+import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageResponseDTO;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -13,5 +13,6 @@ public interface OffreStageService {
     List<OffreStageResponseDTO> filterOffresStage(String localisation, String duree, String domaine);
     public OffreStageResponseDTO updateOffreStage(Long id, OffreStageDTO offreStageDTO);
     public List<OffreStageResponseDTO> getAllOffresStage();
+    public OffreStageResponseDTO addCompetence(String competence,Long id);
 
 }

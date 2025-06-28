@@ -1,27 +1,19 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.annotation.Resource;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureDTO;
-import org.kfokam48.stagemanagementbackend.dto.CandidatureResponseDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureDTO;
+import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.model.Candidature;
 import org.kfokam48.stagemanagementbackend.repository.CandidatureRepository;
 import org.kfokam48.stagemanagementbackend.service.impl.CandidatureServiceImpl;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
