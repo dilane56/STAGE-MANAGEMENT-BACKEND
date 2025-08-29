@@ -7,6 +7,7 @@ import org.kfokam48.stagemanagementbackend.enums.Roles;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.EntrepriseMapper;
 import org.kfokam48.stagemanagementbackend.model.Entreprise;
+import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
 import org.kfokam48.stagemanagementbackend.repository.EntrepriseRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.EntrepriseService;
@@ -46,14 +47,19 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         if (utilisateurRepository.existsByEmail(entrepriseDTO.getEmail())) {
             throw new RuntimeException("User already exists with this email");
         }
-        if (utilisateurRepository.existsByUsername(entrepriseDTO.getUsername())) {
-            throw new RuntimeException("User already exists with this username");
-        }
         Entreprise entreprise = entrepriseMapper.entrepriseDTOToEntreprise(entrepriseDTO);
-        System.out.println(entreprise);
         entreprise.setRole(Roles.ENTREPRISE);
         entreprise.setPassword(passwordEncoder().encode(entrepriseDTO.getPassword()));
-
+        
+        // Remplir le Profile avec les informations spécifiques à l'entreprise
+        Profile profile = new Profile();
+        profile.setDomaineActivite(entreprise.getDomaineActivite());
+        profile.setSiteWeb(entreprise.getSiteWeb());
+        profile.setDescription(entreprise.getDescription());
+        if (entreprise.getDateCreation() != null) {
+            profile.setDateCreation(entreprise.getDateCreation().toString());
+        }
+        entreprise.setProfile(profile);
         return entrepriseMapper.entrepriseToEntrepriseReponseDTO(entrepriseRepository.save(entreprise));
     }
 
@@ -61,30 +67,34 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     public EntrepriseReponseDTO modifierEntreprise(Long id, EntrepriseUpdateDTO entrepriseUpdateDTO) {
         Entreprise entreprise = entrepriseRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found"));
-        if (entrepriseUpdateDTO.getEmail() !=null && !entrepriseUpdateDTO.getEmail().equals(entreprise.getEmail())) {
+        if (entrepriseUpdateDTO.getEmail() != null && !entrepriseUpdateDTO.getEmail().equals(entreprise.getEmail())) {
             if (utilisateurRepository.existsByEmail(entrepriseUpdateDTO.getEmail())) {
                 throw new RuntimeException("User already exists with this email");
             }
         }
-        if (entrepriseUpdateDTO.getUsername() !=null && !entrepriseUpdateDTO.getUsername().equals(entreprise.getUsername())) {
-            if (utilisateurRepository.existsByUsername(entrepriseUpdateDTO.getUsername())) {
-                throw new RuntimeException("User already exists with this username");
-            }
-        }
-        entreprise.setNomEntreprise(entrepriseUpdateDTO.getNomEntreprise());
-        entreprise.setSecteurActivite(entrepriseUpdateDTO.getSecteurActivite());
+        entreprise.setDomaineActivite(entrepriseUpdateDTO.getDomaineActivite());
         entreprise.setSiteWeb(entrepriseUpdateDTO.getSiteWeb());
         entreprise.setDescription(entrepriseUpdateDTO.getDescription());
+        entreprise.setDateCreation(entrepriseUpdateDTO.getDateCreation());
         entreprise.setEmail(entrepriseUpdateDTO.getEmail());
-        entreprise.setUsername(entrepriseUpdateDTO.getUsername());
+        entreprise.setFullName(entrepriseUpdateDTO.getFullName());
+        entreprise.setTelephone(entrepriseUpdateDTO.getTelephone());
+        entreprise.setAvatar(entrepriseUpdateDTO.getAvatar());
         entreprise.setPassword(passwordEncoder().encode(entrepriseUpdateDTO.getPassword()));
         entreprise.setRole(Roles.ENTREPRISE);
-        entreprise.setTelephone(entrepriseUpdateDTO.getTelephone());
-        entreprise.setAdresse(entrepriseUpdateDTO.getAdresse());
+        
+        // Mettre à jour le Profile
+        Profile profile = entreprise.getProfile() != null ? entreprise.getProfile() : new Profile();
+        profile.setDomaineActivite(entreprise.getDomaineActivite());
+        profile.setSiteWeb(entreprise.getSiteWeb());
+        profile.setDescription(entreprise.getDescription());
+        if (entreprise.getDateCreation() != null) {
+            profile.setDateCreation(entreprise.getDateCreation().toString());
+        }
+        entreprise.setProfile(profile);
+        
         entrepriseRepository.save(entreprise);
         return entrepriseMapper.entrepriseToEntrepriseReponseDTO(entreprise);
-
-
     }
 
     @Override

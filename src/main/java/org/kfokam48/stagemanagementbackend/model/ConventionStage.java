@@ -28,10 +28,13 @@ public class ConventionStage {
     @Column(length = 500)
     private String pdfConventionPath;
     private StatutConvention statutConvention;
-    private LocalDate DateCreation;
+    private LocalDate dateDebut;
+    private LocalDate dateFin;
+    private LocalDate dateCreation;
 
     private LocalDate DateValidation;
     private LocalDate DateAprouval;
+    private String commentaire;
 
 
 }

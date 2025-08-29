@@ -7,6 +7,7 @@ import org.kfokam48.stagemanagementbackend.enums.Roles;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.EnseignantMapper;
 import org.kfokam48.stagemanagementbackend.model.Enseignant;
+import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
 import org.kfokam48.stagemanagementbackend.repository.EnseignantRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.EnseignantService;
@@ -37,12 +38,14 @@ public class EnseignantServiceImpl implements EnseignantService {
         if (utilisateurRepository.existsByEmail(enseignantDTO.getEmail())) {
             throw new RessourceNotFoundException("User already exists with this email");
         }
-        if (utilisateurRepository.existsByUsername(enseignantDTO.getUsername())) {
-            throw new RessourceNotFoundException("User already exists with this username");
-        }
         Enseignant enseignant = enseignantMapper.enseigantDTOToEnseignant(enseignantDTO);
         enseignant.setRole(Roles.ENSEIGNANT);
         enseignant.setPassword(passwordEncoder().encode(enseignantDTO.getPassword()));
+        
+        // Remplir le Profile avec les informations spécifiques à l'enseignant
+        Profile profile = new Profile();
+        profile.setUniversite(enseignant.getUniversite());
+        enseignant.setProfile(profile);
         return enseignantMapper.enseignantToEnseignantResponseDTO(enseignantRepository.save(enseignant));
     }
 
@@ -68,21 +71,21 @@ public class EnseignantServiceImpl implements EnseignantService {
             }
             enseignant.setEmail(enseignantUpdateDTO.getEmail());
         }
-        if (enseignantUpdateDTO.getUsername() != null && !enseignantUpdateDTO.getUsername().equals(enseignant.getUsername())) {
-            if (utilisateurRepository.existsByUsername(enseignantUpdateDTO.getUsername())) {
-                throw new RessourceNotFoundException("User already exists with this username");
-            }
-            enseignant.setUsername(enseignantUpdateDTO.getUsername());
-        }
         enseignant.setRole(Roles.ENSEIGNANT);
-        enseignant.setNom(enseignantUpdateDTO.getNom());
-        enseignant.setPrenom(enseignantUpdateDTO.getPrenom());
+        enseignant.setFullName(enseignantUpdateDTO.getFullName());
         enseignant.setTelephone(enseignantUpdateDTO.getTelephone());
-        enseignant.setAdresse(enseignantUpdateDTO.getAdresse());
+        enseignant.setAvatar(enseignantUpdateDTO.getAvatar());
         enseignant.setSpecialite(enseignantUpdateDTO.getSpecialite());
-        enseignant.setUsername(enseignantUpdateDTO.getUsername());
-        enseignant.setEmail(enseignantUpdateDTO.getEmail());
+        enseignant.setGrade(enseignantUpdateDTO.getGrade());
+        enseignant.setDepartement(enseignantUpdateDTO.getDepartement());
+        enseignant.setUniversite(enseignantUpdateDTO.getUniversite());
         enseignant.setPassword(passwordEncoder().encode(enseignantUpdateDTO.getPassword()));
+        
+        // Mettre à jour le Profile
+        Profile profile = enseignant.getProfile() != null ? enseignant.getProfile() : new Profile();
+        profile.setUniversite(enseignant.getUniversite());
+        enseignant.setProfile(profile);
+        
         enseignantRepository.save(enseignant);
         return enseignantMapper.enseignantToEnseignantResponseDTO(enseignant);
     }

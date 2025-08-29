@@ -7,6 +7,7 @@ import org.kfokam48.stagemanagementbackend.enums.Roles;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.EtudiantMapper;
 import org.kfokam48.stagemanagementbackend.model.Etudiant;
+import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
 import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.Etudiantservice;
@@ -38,12 +39,17 @@ public class EtudiantserviceImpl implements Etudiantservice {
         if (utilisateurRepository.existsByEmail(etudiantDTO.getEmail())) {
             throw new RuntimeException("User already exists with this email");
         }
-        if (utilisateurRepository.existsByUsername(etudiantDTO.getUsername())) {
-            throw new RuntimeException("User already exists with this username");
-        }
         Etudiant etudiant = etudiantMapper.etudiantDtoToEtudiant(etudiantDTO);
         etudiant.setRole(Roles.ETUDIANT);
         etudiant.setPassword(passwordEncoder().encode(etudiantDTO.getPassword()));
+        
+        // Remplir le Profile avec les informations spécifiques à l'étudiant
+        Profile profile = new Profile();
+        profile.setFiliere(etudiant.getFiliere());
+        profile.setAnneeScolaire(etudiant.getAnneeScolaire());
+        profile.setNiveau(etudiant.getNiveau());
+        profile.setUniversite(etudiant.getUniversite());
+        etudiant.setProfile(profile);
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiantRepository.save(etudiant));
     }
 
@@ -68,23 +74,24 @@ public class EtudiantserviceImpl implements Etudiantservice {
                 throw new RessourceNotFoundException("User already exists with this email");
             }
         }
-        if (etudiantUpdateDTO.getUsername() != null && !etudiantUpdateDTO.getUsername().equals(etudiant.getUsername())) {
-            if (utilisateurRepository.existsByUsername(etudiantUpdateDTO.getUsername())) {
-                throw new RessourceNotFoundException("User already exists with this username");
-            }
-        }
         etudiant.setRole(Roles.ETUDIANT);
         etudiant.setEmail(etudiantUpdateDTO.getEmail());
-        etudiant.setUsername(etudiantUpdateDTO.getUsername());
-        etudiant.setNom(etudiantUpdateDTO.getNom());
-        etudiant.setPrenom(etudiantUpdateDTO.getPrenom());
+        etudiant.setFullName(etudiantUpdateDTO.getFullName());
         etudiant.setTelephone(etudiantUpdateDTO.getTelephone());
-        etudiant.setDateNaissance(etudiantUpdateDTO.getDateNaissance());
+        etudiant.setAvatar(etudiantUpdateDTO.getAvatar());
         etudiant.setAnneeScolaire(etudiantUpdateDTO.getAnneeScolaire());
         etudiant.setFiliere(etudiantUpdateDTO.getFiliere());
         etudiant.setNiveau(etudiantUpdateDTO.getNiveau());
-        etudiant.setAdresse(etudiantUpdateDTO.getAdresse());
+        etudiant.setUniversite(etudiantUpdateDTO.getUniversite());
         etudiant.setPassword(passwordEncoder().encode(etudiantUpdateDTO.getPassword()));
+        
+        // Mettre à jour le Profile
+        Profile profile = etudiant.getProfile() != null ? etudiant.getProfile() : new Profile();
+        profile.setFiliere(etudiant.getFiliere());
+        profile.setAnneeScolaire(etudiant.getAnneeScolaire());
+        profile.setNiveau(etudiant.getNiveau());
+        profile.setUniversite(etudiant.getUniversite());
+        etudiant.setProfile(profile);
         etudiantRepository.save(etudiant);
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiant);
     }

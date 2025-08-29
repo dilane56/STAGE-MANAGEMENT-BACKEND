@@ -14,6 +14,8 @@ public class ConventionResponseDTO {
     private StatutConvention statutConvention;
     private CandidatureResponseDTO candidature;
     private LocalDate DateCreation;
+    private LocalDate DateDebut;
+    private LocalDate DateFin;
     private LocalDate DateValidation;
     private LocalDate DateAprouval;
 }

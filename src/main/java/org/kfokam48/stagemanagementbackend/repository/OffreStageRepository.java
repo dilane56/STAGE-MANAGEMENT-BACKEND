@@ -23,7 +23,5 @@ public interface OffreStageRepository extends JpaRepository<OffreStage, Long> {
             @Param("secteurNom") String secteurNom
     );
     List<OffreStage> findOffreStageBySecteur(Secteur secteur);
-
-
-
+    Long countByEntrepriseId(Long entrepriseId);
 }

@@ -62,23 +62,35 @@ public class ConventionServiceImpl implements ConventionService {
     public ConventionResponseDTO createConvention(ConventionRequestDTO conventionRequestDTO, MultipartFile file) throws Exception {
         ConventionStage conventionStage = conventionMapper.conventionRequestDTOToCoventionStage(conventionRequestDTO);
         conventionStage.setStatutConvention(StatutConvention.EN_ATTENTE);
+        conventionStage.setDateDebut(LocalDate.now());
         conventionStage.setDateCreation(LocalDate.now());
+        int duree = conventionStage.getCandidature().getOffreStage().getDuree();
+        conventionStage.setDateFin(LocalDate.now().plusMonths(duree));
         // ✅ Upload du fichier vers MinIO
-        String fileUrl = minIOService.uploadFile(file);
-        conventionStage.setPdfConventionPath(fileUrl);
+        if (file != null && !file.isEmpty()) {
+            String fileUrl = minIOService.uploadFile(file);
+            conventionStage.setPdfConventionPath(fileUrl);
+        }
         conventionStageRepository.save(conventionStage);
         return conventionMapper.conventionStageToConventionResponseDTO(conventionStage);
     }
     @Override
     public ConventionResponseDTO updateConvention(ConventionRequestDTO conventionRequestDTO, Long conventionId, MultipartFile file) throws Exception {
         ConventionStage conventionStage = conventionStageRepository.findById(conventionId).orElseThrow(()-> new RessourceNotFoundException("Convention not Found"));
-        Candidature candidature = candidatureRepository.findById(conventionRequestDTO.getIdCandidature()).orElseThrow(()-> new RessourceNotFoundException("Candidature not Found"));
-        conventionStage.setCandidature(candidature);
-        conventionStage.setStatutConvention(StatutConvention.EN_ATTENTE);
+        if (conventionRequestDTO.getIdCandidature() != null) {
+            Candidature candidature = candidatureRepository.findById(conventionRequestDTO.getIdCandidature()).orElseThrow(()-> new RessourceNotFoundException("Candidature not Found"));
+            conventionStage.setCandidature(candidature);
+        }
+        conventionStage.setDateDebut(LocalDate.now());
         conventionStage.setDateCreation(LocalDate.now());
+        int duree = conventionStage.getCandidature().getOffreStage().getDuree();
+        conventionStage.setDateFin(LocalDate.now().plusMonths(duree));
+        conventionStage.setStatutConvention(StatutConvention.EN_ATTENTE);
         // Ajout du fichier dans MinIO
-        String fileUrl = minIOService.uploadFile(file);
-        conventionStage.setPdfConventionPath(fileUrl);
+        if (file != null && !file.isEmpty()) {
+            String fileUrl = minIOService.uploadFile(file);
+            conventionStage.setPdfConventionPath(fileUrl);
+        }
         conventionStageRepository.save(conventionStage);
         return conventionMapper.conventionStageToConventionResponseDTO(conventionStage);
     }

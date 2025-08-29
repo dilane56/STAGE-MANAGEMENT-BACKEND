@@ -34,6 +34,10 @@ public class OffreStageMapper {
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found")));
        offreStage.setIntitule(offreStageDTO.getIntitule());
        offreStage.setLocalisation(offreStageDTO.getLocalisation());
+       offreStage.setDomaine(offreStageDTO.getDomaine());
+       offreStage.setDateDebut(offreStageDTO.getDateDebut());
+       offreStage.setDateFin(offreStageDTO.getDateFin());
+       offreStage.setDateLimiteCandidature(offreStageDTO.getDateLimiteCandidature());
         return offreStage;
     }
 
@@ -46,7 +50,11 @@ public class OffreStageMapper {
         offreStageResponseDTO.setCompetences(offreStage.getCompetences());
         offreStageResponseDTO.setLocalisation(offreStage.getLocalisation());
         offreStageResponseDTO.setDuree(offreStage.getDuree());
-        offreStageResponseDTO.setNomEntreprise(offreStage.getEntreprise().getNomEntreprise());
+        offreStageResponseDTO.setDomaine(offreStage.getDomaine());
+        offreStageResponseDTO.setNomEntreprise(offreStage.getEntreprise().getFullName());
+        offreStageResponseDTO.setDateDebut(offreStage.getDateDebut());
+        offreStageResponseDTO.setDateFin(offreStage.getDateFin());
+        offreStageResponseDTO.setDateLimiteCandidature(offreStage.getDateLimiteCandidature());
         offreStageResponseDTO.setCandidatures(offreStage.getCandidatures().stream()
                 .map(candidature -> modelMapper.map(candidature, CandidatureInOffreStageDTO.class))
                 .toList());

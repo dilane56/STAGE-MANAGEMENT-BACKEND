@@ -31,24 +31,26 @@ public class ConventionMapper {
        ConventionStage conventionStage = new ConventionStage();
        conventionStage.setCandidature(candidatureRepository.findById(conventionRequestDTO.getIdCandidature()).orElseThrow(()->new RessourceNotFoundException("Candidature Not Found")));
        return conventionStage;
-
     }
 
     public ConventionResponseDTO conventionStageToConventionResponseDTO(ConventionStage conventionStage) {
         ConventionResponseDTO conventionResponseDTO = new ConventionResponseDTO();
         conventionResponseDTO.setIdConvention(conventionStage.getId());
+//        conventionResponseDTO.setPdfConventionPath(conventionStage.getPdfConventionPath());
+        conventionResponseDTO.setDateDebut(conventionStage.getDateDebut());
+        conventionResponseDTO.setDateFin(conventionStage.getDateFin());
         conventionResponseDTO.setDateAprouval(conventionStage.getDateAprouval());
-        conventionResponseDTO.setDateCreation(conventionStage.getDateCreation());
         conventionResponseDTO.setDateValidation(conventionStage.getDateValidation());
+        conventionResponseDTO.setDateCreation(conventionStage.getDateCreation());
         if(conventionStage.getEnseignantValideur() == null) {
             conventionResponseDTO.setEnseignantName("");
         }else {
-            conventionResponseDTO.setEnseignantName(conventionStage.getEnseignantValideur().getUsername());
+            conventionResponseDTO.setEnseignantName(conventionStage.getEnseignantValideur().getFullName());
         }
         if(conventionStage.getAprouvalAdministrator() == null) {
             conventionResponseDTO.setAdministratorName("");
         }else{
-            conventionResponseDTO.setAdministratorName(conventionStage.getAprouvalAdministrator().getUsername());
+            conventionResponseDTO.setAdministratorName(conventionStage.getAprouvalAdministrator().getFullName());
         }
         conventionResponseDTO.setStatutConvention(conventionStage.getStatutConvention());
         CandidatureResponseDTO candidatureResponseDTO = candidatureMapper.candidatureToCandidatureResponseDTO(conventionStage.getCandidature());

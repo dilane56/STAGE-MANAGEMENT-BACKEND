@@ -8,10 +8,10 @@ import java.util.List;
 public interface UtilisateurService {
 
     public UtilisateurResponseDTO getUtilisateurById(Long id);
-    public UtilisateurResponseDTO getUtilisateurByUsername(String username);
+
     public UtilisateurResponseDTO getUtilisateurByEmail(String email);
     public List<UtilisateurResponseDTO> getAllUtilisateurs();
     public ResponseEntity<String> deleteUtilisateurById(Long id);
     boolean existsByEmail(String email);
-    boolean existsByUsername(String username);
+
 }

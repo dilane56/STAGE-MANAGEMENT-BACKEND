@@ -24,16 +24,17 @@ public class EntrepriseMapper {
     public EntrepriseReponseDTO entrepriseToEntrepriseReponseDTO(Entreprise entreprise) {
         EntrepriseReponseDTO entrepriseReponseDTO = new EntrepriseReponseDTO();
         entrepriseReponseDTO.setId(entreprise.getId());
-        entrepriseReponseDTO.setNomEntreprise(entreprise.getNomEntreprise());
-        entrepriseReponseDTO.setSecteurActivite(entreprise.getSecteurActivite());
         entrepriseReponseDTO.setEmail(entreprise.getEmail());
-        entrepriseReponseDTO.setUsername(entreprise.getUsername());
-        entrepriseReponseDTO.setRole(entreprise.getRole());
-        entrepriseReponseDTO.setPassword(entreprise.getPassword());
+        entrepriseReponseDTO.setFullName(entreprise.getFullName());
         entrepriseReponseDTO.setTelephone(entreprise.getTelephone());
-        entrepriseReponseDTO.setAdresse(entreprise.getAdresse());
+        entrepriseReponseDTO.setAvatar(entreprise.getAvatar());
+        entrepriseReponseDTO.setRole(entreprise.getRole());
+        entrepriseReponseDTO.setCreateAt(entreprise.getCreateAt());
+        entrepriseReponseDTO.setUpdateAt(entreprise.getUpdateAt());
+        entrepriseReponseDTO.setDomaineActivite(entreprise.getDomaineActivite());
         entrepriseReponseDTO.setSiteWeb(entreprise.getSiteWeb());
         entrepriseReponseDTO.setDescription(entreprise.getDescription());
+        entrepriseReponseDTO.setDateCreation(entreprise.getDateCreation());
         entrepriseReponseDTO.setOffres(entreprise.getOffres().stream()
                 .map(offreStage -> modelMapper.map(offreStage, OffreStageInEntrepriseDTO.class))
                 .toList());

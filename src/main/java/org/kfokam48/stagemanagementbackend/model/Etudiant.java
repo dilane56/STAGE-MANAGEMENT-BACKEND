@@ -8,12 +8,12 @@ import lombok.Data;
 @Entity
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
 public class Etudiant extends Utilisateur {
-    private String nom;
-    private String prenom;
+
     private String filiere;
     private String anneeScolaire;
     private String niveau;
-    private String dateNaissance;
+    private String universite;
+
 
 }
 

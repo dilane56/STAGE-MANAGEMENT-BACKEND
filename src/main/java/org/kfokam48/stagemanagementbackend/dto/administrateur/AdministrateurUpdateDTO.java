@@ -1,14 +1,8 @@
 package org.kfokam48.stagemanagementbackend.dto.administrateur;
 
 import lombok.Data;
-import org.kfokam48.stagemanagementbackend.enums.Roles;
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurDTO;
 
 @Data
-public class AdministrateurUpdateDTO  {
-    private String email;
-    private String password;
-    private String username;
-    private String telephone;
-    private String adresse;
-    private Roles role;
+public class AdministrateurUpdateDTO extends UtilisateurDTO {
 }

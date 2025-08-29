@@ -25,6 +25,8 @@ public class Candidature {
     private StatutCandidature statut; // ENUM : EN_ATTENTE, ACCEPTE, REFUSE
 
     private String lettreMotivation; // Texte riche
+    private LocalDate dateReponse;
+    private String messageReponse;
     private LocalDate dateCandidature;
     @Column(length = 500) // ✅ Définit une limite de 500 caractères
     private String cvPath;

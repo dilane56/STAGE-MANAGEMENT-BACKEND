@@ -32,12 +32,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return  utilisateurMappeur.utilisateurToUtilisateurResponseDTO(utilisateur);
     }
 
-    @Override
-    public UtilisateurResponseDTO getUtilisateurByUsername(String username) {
-        Utilisateur utilisateur = utilisateurRepository.findByUsername(username)
-                .orElseThrow(() -> new RessourceNotFoundException("Utilisateur not found"));
-        return utilisateurMappeur.utilisateurToUtilisateurResponseDTO(utilisateur);
-    }
+
 
     @Override
     public UtilisateurResponseDTO getUtilisateurByEmail(String email) {
@@ -64,8 +59,5 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         return utilisateurRepository.existsByEmail(email);
     }
 
-    @Override
-    public boolean existsByUsername(String username) {
-        return utilisateurRepository.existsByUsername(username);
-    }
+
 }

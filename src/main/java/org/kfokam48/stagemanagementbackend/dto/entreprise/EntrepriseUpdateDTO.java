@@ -3,12 +3,12 @@ package org.kfokam48.stagemanagementbackend.dto.entreprise;
 import lombok.Data;
 import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurDTO;
 
+import java.time.LocalDate;
+
 @Data
-public class EntrepriseUpdateDTO  extends UtilisateurDTO {
-    private String nomEntreprise;
-    private String secteurActivite;
+public class EntrepriseUpdateDTO extends UtilisateurDTO {
+    private String domaineActivite;
     private String siteWeb;
     private String description;
-    private String telephone;
-    private String adresse;
+    private LocalDate dateCreation;
 }

@@ -71,6 +71,10 @@ public class OffreStageServiceImpl implements OffreStageService {
         offreStage.setCompetences(offreStageDTO.getCompetences());
         offreStage.setLocalisation(offreStageDTO.getLocalisation());
         offreStage.setDuree(offreStageDTO.getDuree());
+        offreStage.setDomaine(offreStageDTO.getDomaine());
+        offreStage.setDateDebut(offreStageDTO.getDateDebut());
+        offreStage.setDateFin(offreStageDTO.getDateFin());
+        offreStage.setDateLimiteCandidature(offreStageDTO.getDateLimiteCandidature());
         offreStage.setEntreprise(entrepriseRepository.findById(offreStageDTO.getEntrepriseId())
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found")));
         offreStageRepository.save(offreStage);

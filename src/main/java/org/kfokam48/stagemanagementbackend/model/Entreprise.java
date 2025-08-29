@@ -5,6 +5,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,10 +13,11 @@ import java.util.List;
 @Entity
 @PrimaryKeyJoinColumn(name = "utilisateur_id")
 public class Entreprise extends Utilisateur {
-    private String nomEntreprise;
-    private String secteurActivite;
+
+    private String domaineActivite;
     private String siteWeb;
     private String description;
+    private LocalDate dateCreation;
 
     @OneToMany(mappedBy = "entreprise")
     private List<OffreStage> offres =new ArrayList<>();

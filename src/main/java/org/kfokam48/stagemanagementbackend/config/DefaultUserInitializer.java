@@ -23,7 +23,7 @@ public class DefaultUserInitializer implements CommandLineRunner {
         // Vérifiez si l'utilisateur par défaut existe déjà
         if (userRepository.findByEmail("admin@gmail.com") == null) {
             Administrateur user = new Administrateur();
-            user.setUsername("admin");
+            user.setFullName("Administrateur");
             user.setEmail("admin@gmail.com");
             user.setPassword(passwordEncoder.encode("password")); // Encodez le mot de passe
             user.setRole(Roles.valueOf("ADMIN")); // Définissez le rôle

@@ -41,7 +41,9 @@ public class CandidatureMapper {
         candidatureResponseDTO.setStatutCandidature(candidature.getStatut());
         candidatureResponseDTO.setLettreMotivation(candidature.getLettreMotivation());
         candidatureResponseDTO.setDateCandidature(candidature.getDateCandidature());
-        candidatureResponseDTO.setEtudiantUsername(candidature.getEtudiant().getUsername());
+        candidatureResponseDTO.setEtudiantUsername(candidature.getEtudiant().getFullName());
+        candidatureResponseDTO.setDateReponse(candidature.getDateReponse());
+        candidatureResponseDTO.setMessageReponse(candidature.getMessageReponse());
         candidatureResponseDTO.setOffreStage(modelMapper.map(candidature.getOffreStage(), OffreStageInCandidatureDTO.class));
         candidatureResponseDTO.setCheminFichier(candidature.getCvPath());
         return candidatureResponseDTO;

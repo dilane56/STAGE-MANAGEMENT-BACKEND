@@ -37,16 +37,13 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable) // Utilisation de la nouvelle API pour d
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/login",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/api/secretaire/create",
-                                "/api/patient/create",
-                                "/api/administrateur/create",
-                                "/api/medecin/create",
-                                "/api/utilisateurs/all"
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/refresh"
                         ).permitAll()
 
 //                        // Restreindre l'accès aux endpoints spécifiques

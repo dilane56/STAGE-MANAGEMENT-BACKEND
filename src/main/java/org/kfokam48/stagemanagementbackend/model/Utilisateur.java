@@ -2,6 +2,9 @@ package org.kfokam48.stagemanagementbackend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.kfokam48.stagemanagementbackend.enums.Roles;
+import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
+
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -16,10 +19,15 @@ public abstract class Utilisateur {
 
     @Column(nullable = false)
     private String password;
-    private String username;
+    private String fullName;
     private String telephone;
-    private String adresse;
+    private String avatar;
+    private LocalDate createAt;
+    private LocalDate updateAt;
 
     @Enumerated(EnumType.STRING)
     private Roles role;
+
+    @Embedded
+    private Profile profile;
 }

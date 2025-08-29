@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -17,7 +19,11 @@ public class OffreStageDTO {
     @NotNull(message = "L'entreprise qui publie l'offre est obligatoire")
     private Long entrepriseId; // L'entreprise qui publie l'offre
     private String localisation;
+    private String domaine;
     private Long secteurId;
     private List<String> competences;
+    private LocalDate dateDebut;
+    private LocalDate dateFin;
+    private LocalDateTime dateLimiteCandidature;
 
 }

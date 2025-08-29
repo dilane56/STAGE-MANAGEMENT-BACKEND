@@ -14,6 +14,8 @@ public class CandidatureResponseDTO {
     private StatutCandidature statutCandidature;
     private String lettreMotivation;
     private String cheminFichier;
+    private LocalDate dateReponse;
+    private String messageReponse;
 
     // Add any other fields you need for the response
 }

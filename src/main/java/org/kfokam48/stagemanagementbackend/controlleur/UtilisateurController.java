@@ -27,13 +27,7 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateur);
     }
 
-    // ✅ Récupérer un utilisateur par nom d'utilisateur
-    @GetMapping("/username/{username}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UtilisateurResponseDTO> getUtilisateurByUsername(@PathVariable String username) {
-        UtilisateurResponseDTO utilisateur = utilisateurService.getUtilisateurByUsername(username);
-        return ResponseEntity.ok(utilisateur);
-    }
+
 
     // ✅ Récupérer un utilisateur par email
     @GetMapping("/email/{email}")
@@ -65,10 +59,5 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateurService.existsByEmail(email));
     }
 
-    // ✅ Vérifier si un nom d'utilisateur existe
-    @GetMapping("/exists/username/{username}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Boolean> existsByUsername(@PathVariable String username) {
-        return ResponseEntity.ok(utilisateurService.existsByUsername(username));
-    }
+
 }
