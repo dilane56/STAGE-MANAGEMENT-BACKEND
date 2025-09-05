@@ -15,15 +15,14 @@ public class OffreStageDTO {
     private String intitule;
     private String description;
     @NotNull(message = "La durée de l'offre de stage est obligatoire")
-    private String duree; // en mois
+    private int duree; // en mois
     @NotNull(message = "L'entreprise qui publie l'offre est obligatoire")
     private Long entrepriseId; // L'entreprise qui publie l'offre
     private String localisation;
-    private String domaine;
     private Long secteurId;
     private List<String> competences;
-    private LocalDate dateDebut;
-    private LocalDate dateFin;
+    private LocalDate dateDebutStage;
     private LocalDateTime dateLimiteCandidature;
+    private int nombrePlaces;
 
 }

@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -50,6 +51,7 @@ public class EtudiantserviceImpl implements Etudiantservice {
         profile.setNiveau(etudiant.getNiveau());
         profile.setUniversite(etudiant.getUniversite());
         etudiant.setProfile(profile);
+        etudiant.setCreateAt(LocalDate.now());
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiantRepository.save(etudiant));
     }
 
@@ -66,24 +68,25 @@ public class EtudiantserviceImpl implements Etudiantservice {
     }
 
     @Override
-    public EtudiantResponseDTO updateEtudiant(Long id, EtudiantUpdateDTO etudiantUpdateDTO) {
+    public EtudiantResponseDTO updateEtudiant(Long id, EtudiantDTO etudiantDTO) {
         Etudiant etudiant = etudiantRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Etudiant not found"));
-        if (etudiantUpdateDTO.getEmail() != null && !etudiantUpdateDTO.getEmail().equals(etudiant.getEmail())) {
-            if (utilisateurRepository.existsByEmail(etudiantUpdateDTO.getEmail())) {
+        if (etudiantDTO.getEmail() != null && !etudiantDTO.getEmail().equals(etudiant.getEmail())) {
+            if (utilisateurRepository.existsByEmail(etudiantDTO.getEmail())) {
                 throw new RessourceNotFoundException("User already exists with this email");
             }
         }
         etudiant.setRole(Roles.ETUDIANT);
-        etudiant.setEmail(etudiantUpdateDTO.getEmail());
-        etudiant.setFullName(etudiantUpdateDTO.getFullName());
-        etudiant.setTelephone(etudiantUpdateDTO.getTelephone());
-        etudiant.setAvatar(etudiantUpdateDTO.getAvatar());
-        etudiant.setAnneeScolaire(etudiantUpdateDTO.getAnneeScolaire());
-        etudiant.setFiliere(etudiantUpdateDTO.getFiliere());
-        etudiant.setNiveau(etudiantUpdateDTO.getNiveau());
-        etudiant.setUniversite(etudiantUpdateDTO.getUniversite());
-        etudiant.setPassword(passwordEncoder().encode(etudiantUpdateDTO.getPassword()));
+        etudiant.setEmail(etudiantDTO.getEmail());
+        etudiant.setFullName(etudiantDTO.getFullName());
+        etudiant.setTelephone(etudiantDTO.getTelephone());
+        etudiant.setAvatar(etudiantDTO.getAvatar());
+        etudiant.setAnneeScolaire(etudiantDTO.getAnneeScolaire());
+        etudiant.setFiliere(etudiantDTO.getFiliere());
+        etudiant.setNiveau(etudiantDTO.getNiveau());
+        etudiant.setUniversite(etudiantDTO.getUniversite());
+        etudiant.setPassword(passwordEncoder().encode(etudiantDTO.getPassword()));
+        etudiant.setUpdateAt(LocalDate.now());
         
         // Mettre à jour le Profile
         Profile profile = etudiant.getProfile() != null ? etudiant.getProfile() : new Profile();

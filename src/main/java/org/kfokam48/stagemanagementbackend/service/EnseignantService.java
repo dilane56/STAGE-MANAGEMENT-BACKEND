@@ -12,6 +12,6 @@ public interface EnseignantService {
      EnseignantResponseDTO createEnseignant(EnseignantDTO enseignantDTO);
      EnseignantResponseDTO getEnseignantById(Long id);
      List<EnseignantResponseDTO> getAllEnseignants();
-     EnseignantResponseDTO updateEnseignant(Long id, EnseignantUpdateDTO enseignantUpdateDTO);
+     EnseignantResponseDTO updateEnseignant(Long id, EnseignantDTO enseignantDTO);
      ResponseEntity<String> deleteEnseignant(Long id);
 }

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 @Service
@@ -48,12 +49,13 @@ public class OffreStageServiceImpl implements OffreStageService {
 
     @Override
     public OffreStageResponseDTO createOffreStage(OffreStageDTO offreStageDTO) {
-        return offreStageMapper.offreStageToOffreStageResponseDTO(
-                offreStageRepository.save(offreStageMapper.offreStageDTOToOffreStage(offreStageDTO)));
+        OffreStage offreStage = offreStageMapper.offreStageDTOToOffreStage(offreStageDTO);
+        offreStage.setDatePublication(LocalDate.now());
+        return offreStageMapper.offreStageToOffreStageResponseDTO(offreStageRepository.save(offreStage));
     }
     @Override
-    public List<OffreStageResponseDTO> filterOffresStage(String localisation, String duree, String secteurNom) {
-        List<OffreStage> offres = offreStageRepository.filtrer(localisation, duree, secteurNom);
+    public List<OffreStageResponseDTO> filterOffresStage(String localisation, Integer duree, String domaine) {
+        List<OffreStage> offres = offreStageRepository.filtrer(localisation, duree, domaine);
 
         return offreStageMapper.offresStageToOffresStageResponseDTOs(offres);
     }
@@ -70,10 +72,10 @@ public class OffreStageServiceImpl implements OffreStageService {
         offreStage.setSecteur(secteurRepository.findById(offreStageDTO.getSecteurId()).orElseThrow(()-> new RessourceNotFoundException("Secteur not Found")));
         offreStage.setCompetences(offreStageDTO.getCompetences());
         offreStage.setLocalisation(offreStageDTO.getLocalisation());
-        offreStage.setDuree(offreStageDTO.getDuree());
-        offreStage.setDomaine(offreStageDTO.getDomaine());
-        offreStage.setDateDebut(offreStageDTO.getDateDebut());
-        offreStage.setDateFin(offreStageDTO.getDateFin());
+        offreStage.setDureeStage(offreStageDTO.getDuree());
+        offreStage.setDatePublication(LocalDate.now());
+        offreStage.setDateDebutStage(offreStageDTO.getDateDebutStage());
+        offreStage.setNombrePlaces(offreStageDTO.getNombrePlaces());
         offreStage.setDateLimiteCandidature(offreStageDTO.getDateLimiteCandidature());
         offreStage.setEntreprise(entrepriseRepository.findById(offreStageDTO.getEntrepriseId())
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found")));
@@ -84,6 +86,12 @@ public class OffreStageServiceImpl implements OffreStageService {
     @Override
     public List<OffreStageResponseDTO> getAllOffresStage() {
         return offreStageMapper.offresStageToOffresStageResponseDTOs(offreStageRepository.findAll());
+    }
+
+    @Override
+    public List<OffreStageResponseDTO> getOffresByEntreprise(Long entrepriseId) {
+        List<OffreStage> offres = offreStageRepository.findByEntrepriseId(entrepriseId);
+        return offreStageMapper.offresStageToOffresStageResponseDTOs(offres);
     }
 
     @Override

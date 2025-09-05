@@ -1,6 +1,8 @@
 package org.kfokam48.stagemanagementbackend.config;
 
 import lombok.RequiredArgsConstructor;
+
+import org.kfokam48.stagemanagementbackend.enums.UserStatus;
 import org.kfokam48.stagemanagementbackend.model.Utilisateur;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.springframework.context.event.EventListener;
@@ -10,7 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+
 import java.time.Instant;
+
 
 @Component
 @RequiredArgsConstructor
@@ -32,13 +36,13 @@ public class WebSocketEventListener {
                 try {
                     Long userId = Long.parseLong(userIdStr);
                     Utilisateur user = utilisateurRepository.findById(userId).orElse(null);
-//                    if (user != null && user.getStatus() != UserStatus.EN_LIGNE) {
-//                        user.setStatus(UserStatus.EN_LIGNE);
-//                        utilisateurRepository.save(user);
-//
-//                        messagingTemplate.convertAndSend("/topic/status",
-//                                String.format("{\"userId\": %d, \"status\": \"EN_LIGNE\"}", user.getId()));
-//                    }
+                    if (user != null && user.getStatus() != UserStatus.EN_LIGNE) {
+                        user.setStatus(UserStatus.EN_LIGNE);
+                        utilisateurRepository.save(user);
+
+                        messagingTemplate.convertAndSend("/topic/status",
+                                String.format("{\"userId\": %d, \"status\": \"EN_LIGNE\"}", user.getId()));
+                    }
                 } catch (NumberFormatException e) {
                     System.err.println("ID utilisateur non valide lors de la connexion WebSocket.");
                 }
@@ -55,15 +59,14 @@ public class WebSocketEventListener {
             try {
                 Long userId = Long.parseLong(userIdStr);
                 Utilisateur user = utilisateurRepository.findById(userId).orElse(null);
-//                if (user != null) {
-//                    user.setStatus(UserStatus.HORS_LIGNE);
-//                    user.setDerniereConnexion(Instant.now());
-//                    utilisateurRepository.save(user);
-//
-//                    messagingTemplate.convertAndSend("/topic/status",
-//                            String.format("{\"userId\": %d, \"status\": \"HORS_LIGNE\", \"derniereConnexion\": \"%s\"}",
-//                                    user.getId(), Instant.now().toString()));
-//                }
+                if (user != null) {
+                    user.setStatus(UserStatus.HORS_LIGNE);
+                    utilisateurRepository.save(user);
+
+                    messagingTemplate.convertAndSend("/topic/status",
+                            String.format("{\"userId\": %d, \"status\": \"HORS_LIGNE\", \"derniereConnexion\": \"%s\"}",
+                                    user.getId(), Instant.now().toString()));
+                }
             } catch (NumberFormatException e) {
                 System.err.println("ID utilisateur non valide lors de la déconnexion WebSocket.");
             }

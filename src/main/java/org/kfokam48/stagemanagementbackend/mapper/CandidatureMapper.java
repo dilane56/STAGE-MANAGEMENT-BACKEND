@@ -44,7 +44,7 @@ public class CandidatureMapper {
         candidatureResponseDTO.setEtudiantUsername(candidature.getEtudiant().getFullName());
         candidatureResponseDTO.setDateReponse(candidature.getDateReponse());
         candidatureResponseDTO.setMessageReponse(candidature.getMessageReponse());
-        candidatureResponseDTO.setOffreStage(modelMapper.map(candidature.getOffreStage(), OffreStageInCandidatureDTO.class));
+        candidatureResponseDTO.setOffreStage(offreStageToOffreStageInCandidatureDTO(candidature));
         candidatureResponseDTO.setCheminFichier(candidature.getCvPath());
         return candidatureResponseDTO;
 
@@ -54,5 +54,16 @@ public class CandidatureMapper {
         return  candidatures.stream()
                 .map(this::candidatureToCandidatureResponseDTO)
                 .toList();
+    }
+
+    public OffreStageInCandidatureDTO offreStageToOffreStageInCandidatureDTO(Candidature candidature){
+        OffreStageInCandidatureDTO offreStageInCandidatureDTO = new OffreStageInCandidatureDTO();
+        offreStageInCandidatureDTO.setId(candidature.getOffreStage().getId());
+        offreStageInCandidatureDTO.setIntitule(candidature.getOffreStage().getIntitule());
+        offreStageInCandidatureDTO.setDureeStage(candidature.getOffreStage().getDureeStage());
+        offreStageInCandidatureDTO.setNomEntreprise(candidature.getOffreStage().getEntreprise().getFullName());
+        offreStageInCandidatureDTO.setSecteur(candidature.getOffreStage().getSecteur().getNomSecteur());
+        offreStageInCandidatureDTO.setLocalisation(candidature.getOffreStage().getLocalisation());
+        return offreStageInCandidatureDTO;
     }
 }

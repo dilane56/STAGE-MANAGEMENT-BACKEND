@@ -11,7 +11,7 @@ public interface EntrepriseService {
 
     public EntrepriseReponseDTO getEntrepriseById(Long id);
     public EntrepriseReponseDTO creerEntreprise(EntrepriseDTO entrepriseDTO);
-    public EntrepriseReponseDTO modifierEntreprise(Long id, EntrepriseUpdateDTO entrepriseUpdateDTO);
+    public EntrepriseReponseDTO modifierEntreprise(Long id, EntrepriseDTO entrepriseDTO);
     public ResponseEntity<String> supprimerEntreprise(Long id);
     public List<EntrepriseReponseDTO> getAllEntreprises();
 }

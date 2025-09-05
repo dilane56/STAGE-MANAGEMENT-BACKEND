@@ -1,6 +1,7 @@
 package org.kfokam48.stagemanagementbackend.service.impl;
 
 import jakarta.transaction.Transactional;
+import org.kfokam48.stagemanagementbackend.controlleur.notification.NotificationController;
 import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureDTO;
 import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;
@@ -9,7 +10,6 @@ import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.CandidatureMapper;
 import org.kfokam48.stagemanagementbackend.minio.MinIOService;
 import org.kfokam48.stagemanagementbackend.model.Candidature;
-import org.kfokam48.stagemanagementbackend.notification.CandidatureNotificationHandler;
 import org.kfokam48.stagemanagementbackend.repository.CandidatureRepository;
 import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;
 import org.kfokam48.stagemanagementbackend.repository.OffreStageRepository;
@@ -29,16 +29,16 @@ public class CandidatureServiceImpl implements CandidatureService {
     private final CandidatureMapper candidatureMapper;
     private final OffreStageRepository offreStageRepository;
     private final EtudiantRepository etudiantRepository;
-    private final CandidatureNotificationHandler notificationHandler;
     private final MinIOService minIOService;
+    private final NotificationController notificationController;
 
 
-    public CandidatureServiceImpl(CandidatureRepository candidatureRepository, CandidatureMapper candidatureMapper, OffreStageRepository offreStageRepository, EtudiantRepository etudiantRepository, CandidatureNotificationHandler notificationHandler, MinIOService minIOService) {
+    public CandidatureServiceImpl(CandidatureRepository candidatureRepository, CandidatureMapper candidatureMapper, OffreStageRepository offreStageRepository, EtudiantRepository etudiantRepository, MinIOService minIOService, NotificationController notificationController) {
         this.candidatureRepository = candidatureRepository;
         this.candidatureMapper = candidatureMapper;
         this.offreStageRepository = offreStageRepository;
         this.etudiantRepository = etudiantRepository;
-        this.notificationHandler = notificationHandler;
+        this.notificationController = notificationController;
         this.minIOService = minIOService;
     }
 
@@ -55,20 +55,38 @@ public class CandidatureServiceImpl implements CandidatureService {
     }
 
     @Override
-    public CandidatureResponseDTO addCandidature(CandidatureDTO candidatureDTO) {
-        // ✅ Vérification en base de données
-        boolean exists = candidatureRepository.existsByEtudiantIdAndOffreStageId(
-                candidatureDTO.getEtudiantId(), candidatureDTO.getOffreStageId());
+    public List<CandidatureResponseDTO> getCandidaturesByEtudiant(Long etudiantId) {
+        List<Candidature> candidatures = candidatureRepository.findByEtudiantId(etudiantId);
+        return candidatureMapper.candidatureToCandidatureResponseDTO(candidatures);
+    }
 
-        if (exists) {
-            throw new ResourceAlreadyExistException("L'étudiant a déjà postulé à cette offre !");
+    @Override
+    public List<CandidatureResponseDTO> getCandidaturesByEntreprise(Long entrepriseId) {
+        List<Candidature> candidatures = candidatureRepository.findByOffreStageEntrepriseId(entrepriseId);
+        return candidatureMapper.candidatureToCandidatureResponseDTO(candidatures);
+    }
+
+    @Override
+    public CandidatureResponseDTO updateCandidature(Long id, Long idEtudiant, Long idOffre, String lettreMotivation, MultipartFile file) throws Exception {
+        Candidature candidature = candidatureRepository.findById(id)
+                .orElseThrow(() -> new RessourceNotFoundException("Candidature not found"));
+        
+        candidature.setEtudiant(etudiantRepository.findById(idEtudiant)
+                .orElseThrow(() -> new RessourceNotFoundException("Etudiant not found")));
+        candidature.setOffreStage(offreStageRepository.findById(idOffre)
+                .orElseThrow(() -> new RessourceNotFoundException("Offre stage not found")));
+        candidature.setLettreMotivation(lettreMotivation);
+        candidature.setDateCandidature(LocalDate.now());
+        
+        if (file != null && !file.isEmpty()) {
+            String fileUrl = minIOService.uploadFile(file);
+            candidature.setCvPath(fileUrl);
         }
-        Candidature candidature = candidatureMapper.candidatureDTOToCandidature(candidatureDTO);
-       candidature.setDateCandidature(LocalDate.now());
+        
         candidatureRepository.save(candidature);
         return candidatureMapper.candidatureToCandidatureResponseDTO(candidature);
-
     }
+
 
     @Override
     public CandidatureResponseDTO addCandidature(CandidatureDTO candidatureDTO, MultipartFile file) throws Exception {
@@ -86,6 +104,8 @@ public class CandidatureServiceImpl implements CandidatureService {
 
         candidature.setDateCandidature(LocalDate.now());
         candidature.setStatut(StatutCandidature.EN_ATTENTE);
+        // ✅ Lettre de motivation
+        candidature.setLettreMotivation(candidatureDTO.getLettreMotivation());
 
         // ✅ 1. Uploader le fichier CV dans MinIO
         String fileUrl = minIOService.uploadFile(file); // 🚀 Envoi du fichier
@@ -100,17 +120,18 @@ public class CandidatureServiceImpl implements CandidatureService {
     }
 
     @Override
-    public ResponseEntity<String> updateCandidatureStatut(Long id, String statut) throws IOException {
+    public ResponseEntity<String> updateCandidatureStatut(Long id, String statut, String message) throws IOException {
         Candidature candidature = candidatureRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Candidature not found"));
 
-        candidature.setStatut(StatutCandidature.valueOf(statut)); // Conversion string → enum
+        candidature.setStatut(StatutCandidature.valueOf(statut));
+        candidature.setDateReponse(LocalDate.now());
+        candidature.setMessageReponse(message);
         candidatureRepository.save(candidature);
 
         // Envoi d'une notification en temps réel via WebSocket
-        String message = "Votre candidature pour " + candidature.getOffreStage().getIntitule() +
-                " a changé de statut : " + candidature.getStatut();
-        notificationHandler.sendNotification(candidature.getEtudiant().getId(), message);
+        notificationController.sendNotification(candidature.getEtudiant().getId(), "Statut de la candidature", "Votre candidature a été " + statut, false);
+
 
         return ResponseEntity.ok("Statut de la candidature mis à jour avec succès");
     }
@@ -120,19 +141,6 @@ public class CandidatureServiceImpl implements CandidatureService {
 
 
 
-    @Override
-    public CandidatureResponseDTO updateCandidature(Long id,CandidatureDTO candidatureDTO) {
-        Candidature candidature = candidatureRepository.findById(id)
-                .orElseThrow(() -> new RessourceNotFoundException("Candidature not found"));
-        candidature.setDateCandidature(LocalDate.now());
-        candidature.setLettreMotivation(candidature.getLettreMotivation());
-        candidature.setOffreStage(offreStageRepository.findById(candidatureDTO.getOffreStageId()).orElseThrow(() -> new RessourceNotFoundException("Offre stage not found")));
-        candidature.setEtudiant(etudiantRepository.findById(candidatureDTO.getEtudiantId()).orElseThrow(() -> new RessourceNotFoundException("Etudiant not found")));
-        candidatureRepository.save(candidature);
-
-
-        return candidatureMapper.candidatureToCandidatureResponseDTO(candidature);
-    }
 
     @Override
     public ResponseEntity<String> deleteCandidature(Long id) {

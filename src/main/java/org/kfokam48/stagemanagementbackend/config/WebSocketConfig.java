@@ -1,34 +1,40 @@
 package org.kfokam48.stagemanagementbackend.config;
 
-import org.kfokam48.stagemanagementbackend.chat.ChatMessageHandler;
-import org.kfokam48.stagemanagementbackend.notification.CandidatureNotificationHandler;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
-@EnableWebSocket
-public class WebSocketConfig implements WebSocketConfigurer {
+@EnableWebSocketMessageBroker
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final CandidatureNotificationHandler notificationHandler;
-    private final ChatMessageHandler chatMessageHandler; // ✅ Ajout du gestionnaire de chat
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
-    public WebSocketConfig(CandidatureNotificationHandler notificationHandler, ChatMessageHandler chatMessageHandler) {
-        this.notificationHandler = notificationHandler;
-        this.chatMessageHandler = chatMessageHandler;
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic", "/user", "/queue");
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(notificationHandler, "/ws/candidature")
-                .setAllowedOrigins("*"); // 🔔 Notifications candidature
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws-chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+        
+        registry.addEndpoint("/ws-chat")
+                .setAllowedOriginPatterns("*");
+    }
 
-        registry.addHandler(chatMessageHandler, "/ws/chat")
-                .setAllowedOrigins("*"); // 💬 Messagerie instantanée
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setMessageSizeLimit(64 * 1024) // 64KB
+                   .setSendBufferSizeLimit(512 * 1024) // 512KB
+                   .setSendTimeLimit(20000); // 20 seconds
     }
 
 
 }
-
-

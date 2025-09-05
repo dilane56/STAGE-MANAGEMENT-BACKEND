@@ -48,46 +48,69 @@ public class CandidatureController {
         return ResponseEntity.ok(candidatures);
     }
 
+    @GetMapping("/etudiant/{etudiantId}")
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
+    public ResponseEntity<List<CandidatureResponseDTO>> getCandidaturesByEtudiant(@PathVariable Long etudiantId) {
+        List<CandidatureResponseDTO> candidatures = candidatureService.getCandidaturesByEtudiant(etudiantId);
+        return ResponseEntity.ok(candidatures);
+    }
+
+    @GetMapping("/entreprise/{entrepriseId}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
+    public ResponseEntity<List<CandidatureResponseDTO>> getCandidaturesByEntreprise(@PathVariable Long entrepriseId) {
+        List<CandidatureResponseDTO> candidatures = candidatureService.getCandidaturesByEntreprise(entrepriseId);
+        return ResponseEntity.ok(candidatures);
+    }
+
     // ✅ Ajouter une nouvelle candidature
     @PostMapping(value = "/ajouter", consumes = "multipart/form-data")
-    @Operation(summary = "Ajouter une candidature avec CV")
+    @Operation(summary = "Ajouter une candidature avec CV et Lettre de motivation")
     @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
-    // ✅ Ajouter une candidature avec upload du CV
     public ResponseEntity<CandidatureResponseDTO> addCandidature(
             @RequestParam Long idEtudiant,
             @RequestParam Long idOffre,
-            @RequestParam("cv") MultipartFile file) throws Exception {
-CandidatureDTO candidatureDTO = new CandidatureDTO();
-candidatureDTO.setEtudiantId(idEtudiant);
-candidatureDTO.setOffreStageId(idOffre);
-candidatureDTO.setLettreMotivation("String");
+            @RequestParam("cv") MultipartFile file,
+            @RequestParam("lettreMotivation") String lettreMotivation
+    ) throws Exception {
+
+        CandidatureDTO candidatureDTO = new CandidatureDTO();
+        candidatureDTO.setEtudiantId(idEtudiant);
+        candidatureDTO.setOffreStageId(idOffre);
+        candidatureDTO.setLettreMotivation(lettreMotivation); // ✅ injecte la vraie LM
+
         CandidatureResponseDTO candidatureResponseDTO = candidatureService.addCandidature(candidatureDTO, file);
+
         return ResponseEntity.ok(candidatureResponseDTO);
     }
 
 
 
 
-    @PostMapping()
-    @Operation(summary = "Ajouter une candidature sans  upload de CV")
-    public ResponseEntity<CandidatureResponseDTO> addCandidature(@RequestBody CandidatureDTO candidatureDTO) {
-        return ResponseEntity.ok(candidatureService.addCandidature(candidatureDTO));
-    }
+//
+//    @PostMapping()
+//    @Operation(summary = "Ajouter une candidature sans  upload de CV")
+//    public ResponseEntity<CandidatureResponseDTO> addCandidature(@RequestBody CandidatureDTO candidatureDTO) {
+//        return ResponseEntity.ok(candidatureService.addCandidature(candidatureDTO));
+//    }
 
 
-    // ✅ Mettre à jour une candidature
-    @PutMapping("/{id}")
+    // ✅ Mettre à jour une candidature avec fichier
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     public ResponseEntity<CandidatureResponseDTO> updateCandidature(
             @PathVariable Long id,
-            @RequestBody CandidatureDTO candidatureDTO) {
-        CandidatureResponseDTO candidature = candidatureService.updateCandidature(id, candidatureDTO);
+            @RequestParam Long idEtudiant,
+            @RequestParam Long idOffre,
+            @RequestParam String lettreMotivation,
+            @RequestParam(value = "cv", required = false) MultipartFile file) throws Exception {
+        CandidatureResponseDTO candidature = candidatureService.updateCandidature(id, idEtudiant, idOffre, lettreMotivation, file);
         return ResponseEntity.ok(candidature);
     }
 
+
     // ✅ Supprimer une candidature
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
     public ResponseEntity<String> deleteCandidature(@PathVariable Long id) {
         return candidatureService.deleteCandidature(id);
     }
@@ -107,20 +130,21 @@ candidatureDTO.setLettreMotivation("String");
         return ResponseEntity.ok().headers(headers).body(fileBytes);
     }
 
-
-    @PostMapping(value = "/add-cv", consumes = "multipart/form-data")
-    @Operation(summary = "Ajouter CV a une candidature")
-    public ResponseEntity<String> uploadCv(@RequestParam("file") MultipartFile file, @RequestParam Long id) throws Exception {
-        return candidatureService.uploadImage(file, id);
-
-    }
+//
+//    @PostMapping(value = "/add-cv", consumes = "multipart/form-data")
+//    @Operation(summary = "Ajouter CV a une candidature")
+//    public ResponseEntity<String> uploadCv(@RequestParam("file") MultipartFile file, @RequestParam Long id) throws Exception {
+//        return candidatureService.uploadImage(file, id);
+//
+//    }
 
     @PutMapping("/{id}/statut")
     @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<String> updateCandidatureStatut(
             @PathVariable Long id,
-            @RequestParam String statut) throws IOException {
+            @RequestParam String statut,
+            @RequestParam(required = false) String message) throws IOException {
 
-        return candidatureService.updateCandidatureStatut(id, statut);
+        return candidatureService.updateCandidatureStatut(id, statut, message);
     }
 }

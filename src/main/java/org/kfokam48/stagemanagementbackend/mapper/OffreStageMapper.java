@@ -27,16 +27,15 @@ public class OffreStageMapper {
     public OffreStage offreStageDTOToOffreStage(OffreStageDTO offreStageDTO) {
        OffreStage offreStage = new OffreStage();
         offreStage.setDescription(offreStageDTO.getDescription());
-        offreStage.setDuree(offreStageDTO.getDuree());
+        offreStage.setDureeStage(offreStageDTO.getDuree());
         offreStage.setSecteur(secteurRepository.findById(offreStageDTO.getSecteurId()).orElseThrow(()->new RessourceNotFoundException("Secteur not found")));
         offreStage.setCompetences(offreStageDTO.getCompetences());
        offreStage.setEntreprise(entrepriseRepository.findById(offreStageDTO.getEntrepriseId())
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found")));
        offreStage.setIntitule(offreStageDTO.getIntitule());
        offreStage.setLocalisation(offreStageDTO.getLocalisation());
-       offreStage.setDomaine(offreStageDTO.getDomaine());
-       offreStage.setDateDebut(offreStageDTO.getDateDebut());
-       offreStage.setDateFin(offreStageDTO.getDateFin());
+      offreStage.setDateDebutStage(offreStageDTO.getDateDebutStage());
+       offreStage.setNombrePlaces(offreStageDTO.getNombrePlaces());
        offreStage.setDateLimiteCandidature(offreStageDTO.getDateLimiteCandidature());
         return offreStage;
     }
@@ -49,12 +48,12 @@ public class OffreStageMapper {
         offreStageResponseDTO.setSecteurName(offreStage.getSecteur().getNomSecteur());
         offreStageResponseDTO.setCompetences(offreStage.getCompetences());
         offreStageResponseDTO.setLocalisation(offreStage.getLocalisation());
-        offreStageResponseDTO.setDuree(offreStage.getDuree());
-        offreStageResponseDTO.setDomaine(offreStage.getDomaine());
+        offreStageResponseDTO.setDureeStage(offreStage.getDureeStage());
         offreStageResponseDTO.setNomEntreprise(offreStage.getEntreprise().getFullName());
-        offreStageResponseDTO.setDateDebut(offreStage.getDateDebut());
-        offreStageResponseDTO.setDateFin(offreStage.getDateFin());
+        offreStageResponseDTO.setDatePublication(offreStage.getDatePublication());
+        offreStageResponseDTO.setDateDebutStage(offreStage.getDateDebutStage());
         offreStageResponseDTO.setDateLimiteCandidature(offreStage.getDateLimiteCandidature());
+        offreStageResponseDTO.setNombrePlaces(offreStage.getNombrePlaces());
         offreStageResponseDTO.setCandidatures(offreStage.getCandidatures().stream()
                 .map(candidature -> modelMapper.map(candidature, CandidatureInOffreStageDTO.class))
                 .toList());

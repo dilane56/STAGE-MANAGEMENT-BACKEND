@@ -2,6 +2,7 @@ package org.kfokam48.stagemanagementbackend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.kfokam48.stagemanagementbackend.enums.Roles;
+import org.kfokam48.stagemanagementbackend.enums.UserStatus;
 import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
 
 import java.time.LocalDate;
@@ -30,4 +31,5 @@ public abstract class Utilisateur {
 
     @Embedded
     private Profile profile;
+    private UserStatus status;
 }

@@ -19,19 +19,21 @@ public class OffreStage {
     private String intitule;
     private String description;
     private String localisation;
-    private int duree;
-    private String domaine;
+    private int dureeStage;
     @ElementCollection
     @CollectionTable(name = "offre_competences", joinColumns = @JoinColumn(name = "offre_id"))
     @Column(name = "competence")
     private List<String> competences=new ArrayList<>();
-    private LocalDate dateDebut;
-    private LocalDate dateFin;
+    private LocalDate datePublication;
     private LocalDateTime dateLimiteCandidature;
+    private int nombrePlaces;
+
     @ManyToOne
     @JoinColumn(name = "secteur_id")
     private Secteur secteur;
     
+    private LocalDate dateDebutStage;
+
 
     @ManyToOne
   //  @JoinColumn(name = "entreprise_id")

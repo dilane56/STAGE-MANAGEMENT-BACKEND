@@ -1,5 +1,6 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 
+import jakarta.validation.Valid;
 import org.kfokam48.stagemanagementbackend.dto.secteur.SecteurRequestDTO;
 import org.kfokam48.stagemanagementbackend.model.Secteur;
 import org.kfokam48.stagemanagementbackend.service.SecteurService;
@@ -10,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/secteurs")
-public class SecteurController {
+public class  SecteurController {
     private final SecteurService secteurService;
 
     public SecteurController(SecteurService secteurService) {
@@ -26,11 +27,11 @@ public class SecteurController {
         return ResponseEntity.ok(secteurService.getAllSecteurs());
     }
     @PostMapping
-    public ResponseEntity<Secteur> createSecteur(@RequestBody SecteurRequestDTO secteurRequestDTO) {
+    public ResponseEntity<Secteur> createSecteur(@RequestBody @Valid SecteurRequestDTO secteurRequestDTO) {
         return ResponseEntity.ok(secteurService.saveSecteur(secteurRequestDTO));
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Secteur> updateSecteur(@PathVariable Long id, @RequestBody SecteurRequestDTO secteurRequestDTO) {
+    public ResponseEntity<Secteur> updateSecteur(@PathVariable Long id, @RequestBody @Valid SecteurRequestDTO secteurRequestDTO) {
         return ResponseEntity.ok(secteurService.updateSecteur(id, secteurRequestDTO));
     }
     @DeleteMapping("/{id}")

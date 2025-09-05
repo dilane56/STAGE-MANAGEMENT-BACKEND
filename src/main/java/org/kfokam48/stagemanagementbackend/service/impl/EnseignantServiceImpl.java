@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 @Service
 @Transactional
@@ -62,24 +63,25 @@ public class EnseignantServiceImpl implements EnseignantService {
     }
 
     @Override
-    public EnseignantResponseDTO updateEnseignant(Long id, EnseignantUpdateDTO enseignantUpdateDTO) {
+    public EnseignantResponseDTO updateEnseignant(Long id, EnseignantDTO enseignantDTO) {
         Enseignant enseignant = enseignantRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Enseignant not found"));
-        if (enseignantUpdateDTO.getEmail() != null && !enseignantUpdateDTO.getEmail().equals(enseignant.getEmail())) {
-            if (utilisateurRepository.existsByEmail(enseignantUpdateDTO.getEmail())) {
+        if (enseignantDTO.getEmail() != null && !enseignantDTO.getEmail().equals(enseignant.getEmail())) {
+            if (utilisateurRepository.existsByEmail(enseignantDTO.getEmail())) {
                 throw new RessourceNotFoundException("User already exists with this email");
             }
-            enseignant.setEmail(enseignantUpdateDTO.getEmail());
+            enseignant.setEmail(enseignantDTO.getEmail());
         }
         enseignant.setRole(Roles.ENSEIGNANT);
-        enseignant.setFullName(enseignantUpdateDTO.getFullName());
-        enseignant.setTelephone(enseignantUpdateDTO.getTelephone());
-        enseignant.setAvatar(enseignantUpdateDTO.getAvatar());
-        enseignant.setSpecialite(enseignantUpdateDTO.getSpecialite());
-        enseignant.setGrade(enseignantUpdateDTO.getGrade());
-        enseignant.setDepartement(enseignantUpdateDTO.getDepartement());
-        enseignant.setUniversite(enseignantUpdateDTO.getUniversite());
-        enseignant.setPassword(passwordEncoder().encode(enseignantUpdateDTO.getPassword()));
+        enseignant.setFullName(enseignantDTO.getFullName());
+        enseignant.setTelephone(enseignantDTO.getTelephone());
+        enseignant.setAvatar(enseignantDTO.getAvatar());
+        enseignant.setSpecialite(enseignantDTO.getSpecialite());
+        enseignant.setGrade(enseignantDTO.getGrade());
+        enseignant.setDepartement(enseignantDTO.getDepartement());
+        enseignant.setUniversite(enseignantDTO.getUniversite());
+        enseignant.setPassword(passwordEncoder().encode(enseignantDTO.getPassword()));
+        enseignant.setUpdateAt(LocalDate.now());
         
         // Mettre à jour le Profile
         Profile profile = enseignant.getProfile() != null ? enseignant.getProfile() : new Profile();

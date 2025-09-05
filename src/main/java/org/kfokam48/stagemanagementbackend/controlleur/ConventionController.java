@@ -44,11 +44,11 @@ public class ConventionController {
     @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<ConventionResponseDTO> updateConvention(
             @PathVariable Long id,
-            @RequestParam("candidature-id") Long CandidatureId,
+            @RequestParam("candidature-id") Long idCandidature,
             @RequestParam("pdf") MultipartFile file) throws Exception {
         ConventionRequestDTO conventionRequestDTO = new ConventionRequestDTO();
         conventionRequestDTO.setIdCandidature(id);
-        ConventionResponseDTO convention = conventionService.updateConvention(conventionRequestDTO, id, file);
+        ConventionResponseDTO convention = conventionService.updateConvention( id,idCandidature, file);
         return ResponseEntity.ok(convention);
     }
 
@@ -65,6 +65,13 @@ public class ConventionController {
     @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ENSEIGNANT')")
     public ResponseEntity<List<ConventionResponseDTO>> findAllConventions() {
         List<ConventionResponseDTO> conventions = conventionService.findAllConventions();
+        return ResponseEntity.ok(conventions);
+    }
+
+    @GetMapping("/entreprise/{entrepriseId}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
+    public ResponseEntity<List<ConventionResponseDTO>> findConventionsByEntreprise(@PathVariable Long entrepriseId) {
+        List<ConventionResponseDTO> conventions = conventionService.findConventionsByEntreprise(entrepriseId);
         return ResponseEntity.ok(conventions);
     }
 

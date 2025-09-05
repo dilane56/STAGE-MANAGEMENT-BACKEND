@@ -11,16 +11,16 @@ public class OffreStageResponseDTO {
    private Long id;
     private String intitule;
     private String description;
-    private String duree;
+    private int dureeStage;
     private String nomEntreprise;
     private String localisation;
-    private String domaine;
     private List<CandidatureInOffreStageDTO> candidatures;
     private List<String> competences;
     private String secteurName;
-    private LocalDate dateDebut;
-    private LocalDate dateFin;
+    private LocalDate datePublication;
     private LocalDateTime dateLimiteCandidature;
+    private LocalDate dateDebutStage;
+    private int nombrePlaces;
 
 
 

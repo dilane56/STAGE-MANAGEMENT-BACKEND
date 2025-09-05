@@ -4,8 +4,10 @@ import lombok.Data;
 
 @Data
 public class OffreStageInCandidatureDTO {
+    private Long id;
     private String intitule;
-    private String domaine;
-    private String duree; // en mois
+    private String secteur;
+    private int dureeStage; // en mois
     private String nomEntreprise; // L'entreprise qui publie l'offre
+    private String localisation;
 }

@@ -1,6 +1,7 @@
 package org.kfokam48.stagemanagementbackend.service.impl;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.kfokam48.stagemanagementbackend.dto.secteur.SecteurRequestDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.SecteurMapper;
@@ -32,7 +33,7 @@ public class SecteurServiceImpl implements SecteurService {
     }
 
     @Override
-    public Secteur saveSecteur(SecteurRequestDTO secteurRequestDTO) {
+    public Secteur saveSecteur( @Valid SecteurRequestDTO secteurRequestDTO) {
 
         return secteurRepository.save(secteurMapper.secteurRequestDTOToSecteur(secteurRequestDTO));
     }
@@ -45,9 +46,9 @@ public class SecteurServiceImpl implements SecteurService {
     }
 
     @Override
-    public Secteur updateSecteur(Long id, SecteurRequestDTO secteurRequestDTO) {
+    public Secteur updateSecteur(Long id,@Valid SecteurRequestDTO secteurRequestDTO) {
         Secteur secteur = secteurRepository.findById(id).orElseThrow(() -> new RessourceNotFoundException("Secteur not found"));
-        secteur.setNomSecteur(secteurRequestDTO.getSecteurName());
+        secteur.setNomSecteur(secteurRequestDTO.getNomSecteur());
         secteurRepository.save(secteur);
         return secteur;
     }

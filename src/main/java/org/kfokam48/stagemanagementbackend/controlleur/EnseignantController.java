@@ -41,7 +41,7 @@ public class EnseignantController {
     @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ADMIN')")
     public ResponseEntity<EnseignantResponseDTO> updateEnseignant(
             @PathVariable Long id,
-            @RequestBody EnseignantUpdateDTO enseignantUpdateDTO) {
+            @RequestBody EnseignantDTO enseignantUpdateDTO) {
         EnseignantResponseDTO enseignant = enseignantService.updateEnseignant(id, enseignantUpdateDTO);
         return ResponseEntity.ok(enseignant);
     }

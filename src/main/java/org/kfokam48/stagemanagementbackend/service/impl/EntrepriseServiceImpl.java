@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -64,24 +65,25 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     }
 
     @Override
-    public EntrepriseReponseDTO modifierEntreprise(Long id, EntrepriseUpdateDTO entrepriseUpdateDTO) {
+    public EntrepriseReponseDTO modifierEntreprise(Long id, EntrepriseDTO entrepriseDTO) {
         Entreprise entreprise = entrepriseRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found"));
-        if (entrepriseUpdateDTO.getEmail() != null && !entrepriseUpdateDTO.getEmail().equals(entreprise.getEmail())) {
-            if (utilisateurRepository.existsByEmail(entrepriseUpdateDTO.getEmail())) {
+        if (entrepriseDTO.getEmail() != null && !entrepriseDTO.getEmail().equals(entreprise.getEmail())) {
+            if (utilisateurRepository.existsByEmail(entrepriseDTO.getEmail())) {
                 throw new RuntimeException("User already exists with this email");
             }
         }
-        entreprise.setDomaineActivite(entrepriseUpdateDTO.getDomaineActivite());
-        entreprise.setSiteWeb(entrepriseUpdateDTO.getSiteWeb());
-        entreprise.setDescription(entrepriseUpdateDTO.getDescription());
-        entreprise.setDateCreation(entrepriseUpdateDTO.getDateCreation());
-        entreprise.setEmail(entrepriseUpdateDTO.getEmail());
-        entreprise.setFullName(entrepriseUpdateDTO.getFullName());
-        entreprise.setTelephone(entrepriseUpdateDTO.getTelephone());
-        entreprise.setAvatar(entrepriseUpdateDTO.getAvatar());
-        entreprise.setPassword(passwordEncoder().encode(entrepriseUpdateDTO.getPassword()));
+        entreprise.setDomaineActivite(entrepriseDTO.getDomaineActivite());
+        entreprise.setSiteWeb(entrepriseDTO.getSiteWeb());
+        entreprise.setDescription(entrepriseDTO.getDescription());
+        entreprise.setDateCreation(entrepriseDTO.getDateCreation());
+        entreprise.setEmail(entrepriseDTO.getEmail());
+        entreprise.setFullName(entrepriseDTO.getFullName());
+        entreprise.setTelephone(entrepriseDTO.getTelephone());
+        entreprise.setAvatar(entrepriseDTO.getAvatar());
+        entreprise.setPassword(passwordEncoder().encode(entrepriseDTO.getPassword()));
         entreprise.setRole(Roles.ENTREPRISE);
+        entreprise.setUpdateAt(LocalDate.now());
         
         // Mettre à jour le Profile
         Profile profile = entreprise.getProfile() != null ? entreprise.getProfile() : new Profile();

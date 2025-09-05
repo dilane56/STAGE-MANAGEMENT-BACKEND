@@ -41,13 +41,13 @@ public class OffreStageController {
     @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT')")
     public ResponseEntity<List<OffreStageResponseDTO>> filterOffresStage(
             @RequestParam(required = false) String localisation,
-            @RequestParam(required = false) String duree,
+            @RequestParam(required = false) Integer duree,
             @RequestParam(required = false) String domaine) {
 
         List<OffreStageResponseDTO> offres = offreStageService.filterOffresStage(
-                localisation != null ? localisation : "",
-                duree != null ? duree : "",
-                domaine != null ? domaine : "");
+                localisation,
+                duree,
+                domaine);
 
         return ResponseEntity.ok(offres);
     }
@@ -71,10 +71,17 @@ public class OffreStageController {
 
     // ✅ Récupérer toutes les offres de stage
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ETUDIANT')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ETUDIANT') or hasRole('ENSEIGNANT')")
     public ResponseEntity<List<OffreStageResponseDTO>> getAllOffresStage() {
         List<OffreStageResponseDTO> offresStage = offreStageService.getAllOffresStage();
         return ResponseEntity.ok(offresStage);
+    }
+
+    @GetMapping("/entreprise/{entrepriseId}")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
+    public ResponseEntity<List<OffreStageResponseDTO>> getOffresByEntreprise(@PathVariable Long entrepriseId) {
+        List<OffreStageResponseDTO> offres = offreStageService.getOffresByEntreprise(entrepriseId);
+        return ResponseEntity.ok(offres);
     }
 
     @PostMapping("/{id}/competences")

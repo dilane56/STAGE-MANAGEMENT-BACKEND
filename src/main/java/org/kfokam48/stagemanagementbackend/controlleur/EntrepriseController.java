@@ -44,7 +44,7 @@ public class EntrepriseController {
     @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<EntrepriseReponseDTO> modifierEntreprise(
             @PathVariable Long id,
-            @RequestBody EntrepriseUpdateDTO entrepriseUpdateDTO) {
+            @RequestBody EntrepriseDTO entrepriseUpdateDTO) {
         EntrepriseReponseDTO entreprise = entrepriseService.modifierEntreprise(id, entrepriseUpdateDTO);
         return ResponseEntity.ok(entreprise);
     }

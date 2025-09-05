@@ -6,11 +6,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
+
 @Repository
 public interface ConventionStageRepository extends JpaRepository<ConventionStage, Long> {
     Long countByEnseignantValideurId(Long enseignantId);
     Long countByEnseignantValideurIdAndStatutConvention(Long enseignantId, StatutConvention statut);
     Long countByStatutConvention(StatutConvention statut);
+    boolean existsByCandidatureId(Long candidatureId);
+    List<ConventionStage> findByCandidatureOffreStageEntrepriseId(Long entrepriseId);
     
     @Query("SELECT COUNT(DISTINCT c.candidature.etudiant.id) FROM ConventionStage c WHERE c.enseignantValideur.id = :enseignantId")
     Long countDistinctStudentsByEnseignantId(Long enseignantId);
