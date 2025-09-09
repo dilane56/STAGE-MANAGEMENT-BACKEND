@@ -624,4 +624,29 @@ interface Convention {
 9. **Rate Limiting** : Limiter le nombre de requêtes par utilisateur
 10. **CORS** : Configurer CORS pour le frontend
 
-Cette documentation couvre tous les besoins identifiés dans votre application frontend React.
+1. Gestion des conversations
+   GET /api/conversations/utilisateur/{userId} - Récupère toutes les conversations d'un utilisateur
+
+POST /api/conversations - Crée une nouvelle conversation entre deux utilisateurs
+
+{
+"participant1Id": 1,
+"participant2Id": 2
+}
+
+Copy
+json
+2. Gestion des messages
+   GET /api/conversations/{conversationId}/messages - Récupère tous les messages d'une conversation
+
+POST /api/conversations/{conversationId}/messages - Envoie un nouveau message
+
+{
+"contenu": "Message text",
+"expediteurId": 1
+}
+
+Copy
+json
+3. Marquage des messages
+   PUT /api/conversations/{conversationId}/marquer-lu/{userId} - Marque tous les messages d'une conversation comme lus par un utilisateur

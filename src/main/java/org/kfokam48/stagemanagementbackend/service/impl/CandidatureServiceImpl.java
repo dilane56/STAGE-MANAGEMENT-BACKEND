@@ -84,6 +84,8 @@ public class CandidatureServiceImpl implements CandidatureService {
         }
         
         candidatureRepository.save(candidature);
+        Long entrepriseId = candidature.getOffreStage().getEntreprise().getId();
+        notificationController.sendNotification(entrepriseId, "Candidature mise à jour", "Une candidature a été mise à jour", false);
         return candidatureMapper.candidatureToCandidatureResponseDTO(candidature);
     }
 
@@ -115,6 +117,8 @@ public class CandidatureServiceImpl implements CandidatureService {
 
         // ✅ 3. Enregistrer la candidature avec l’URL du CV
         candidatureRepository.save(candidature);
+        Long entrepriseId = candidature.getOffreStage().getEntreprise().getId();
+        notificationController.sendNotification(entrepriseId, "Nouvelle candidature", "Une nouvelle candidature a été postulée à votre offre", false);
 
         return candidatureMapper.candidatureToCandidatureResponseDTO(candidature);
     }

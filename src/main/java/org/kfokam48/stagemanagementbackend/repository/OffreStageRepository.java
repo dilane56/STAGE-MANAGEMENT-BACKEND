@@ -12,16 +12,14 @@ import java.util.List;
 @Repository
 public interface OffreStageRepository extends JpaRepository<OffreStage, Long> {
 
-    // Filtrer les offres par localisation, durée et secteur
-    @Query("SELECT o FROM OffreStage o WHERE " +
-            "(:localisation IS NULL OR LOWER(o.localisation) LIKE LOWER(CONCAT('%', :localisation, '%'))) AND " +
-            "(:duree IS NULL OR o.dureeStage = :duree) AND " +
-            "(:secteurNom IS NULL OR LOWER(o.secteur.nomSecteur) LIKE LOWER(CONCAT('%', :secteurNom, '%')))")
-    List<OffreStage> filtrer(
-            @Param("localisation") String localisation,
-            @Param("dureeStage") Integer dureeStage,
-            @Param("secteurNom") String secteurNom
-    );
+    List<OffreStage> findByLocalisationContainingIgnoreCaseAndDureeStageAndSecteurNomSecteurContainingIgnoreCase(
+            String localisation, Integer dureeStage, String secteurNom);
+    List<OffreStage> findByLocalisationContainingIgnoreCase(String localisation);
+    List<OffreStage> findByDureeStage(Integer dureeStage);
+    List<OffreStage> findBySecteurNomSecteurContainingIgnoreCase(String secteurNom);
+    List<OffreStage> findByLocalisationContainingIgnoreCaseAndDureeStage(String localisation, Integer dureeStage);
+    List<OffreStage> findByLocalisationContainingIgnoreCaseAndSecteurNomSecteurContainingIgnoreCase(String localisation, String secteurNom);
+    List<OffreStage> findByDureeStageAndSecteurNomSecteurContainingIgnoreCase(Integer dureeStage, String secteurNom);
     List<OffreStage> findOffreStageBySecteur(Secteur secteur);
     List<OffreStage> findByEntrepriseId(Long entrepriseId);
     Long countByEntrepriseId(Long entrepriseId);

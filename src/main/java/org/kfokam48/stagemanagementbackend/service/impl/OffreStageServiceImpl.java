@@ -1,5 +1,6 @@
 package org.kfokam48.stagemanagementbackend.service.impl;
 
+import org.kfokam48.stagemanagementbackend.controlleur.notification.NotificationController;
 import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageDTO;
 import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageResponseDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
@@ -23,12 +24,14 @@ public class OffreStageServiceImpl implements OffreStageService {
     private final OffreStageMapper offreStageMapper;
     private final EntrepriseRepository entrepriseRepository;
     private final SecteurRepository secteurRepository;
+    private final NotificationController notificationController;
 
-    public OffreStageServiceImpl(OffreStageRepository offreStageRepository, OffreStageMapper offreStageMapper, EntrepriseRepository entrepriseRepository, SecteurRepository secteurRepository) {
+    public OffreStageServiceImpl(OffreStageRepository offreStageRepository, OffreStageMapper offreStageMapper, EntrepriseRepository entrepriseRepository, SecteurRepository secteurRepository, NotificationController notificationController) {
         this.offreStageRepository = offreStageRepository;
         this.offreStageMapper = offreStageMapper;
         this.entrepriseRepository = entrepriseRepository;
         this.secteurRepository = secteurRepository;
+        this.notificationController = notificationController;
     }
 
     @Override
@@ -51,14 +54,37 @@ public class OffreStageServiceImpl implements OffreStageService {
     public OffreStageResponseDTO createOffreStage(OffreStageDTO offreStageDTO) {
         OffreStage offreStage = offreStageMapper.offreStageDTOToOffreStage(offreStageDTO);
         offreStage.setDatePublication(LocalDate.now());
-        return offreStageMapper.offreStageToOffreStageResponseDTO(offreStageRepository.save(offreStage));
+        offreStageRepository.save(offreStage);
+        Long adminId = 1L;
+        notificationController.sendNotification(adminId, "Nouvelle offre de stage", "une nouvelle offre de stage a ete ajouter",false);
+        return offreStageMapper.offreStageToOffreStageResponseDTO(offreStage);
     }
+
     @Override
-    public List<OffreStageResponseDTO> filterOffresStage(String localisation, Integer duree, String domaine) {
-        List<OffreStage> offres = offreStageRepository.filtrer(localisation, duree, domaine);
+    public List<OffreStageResponseDTO> filterOffresStage(String localisation, Integer duree, String secteurNom) {
+        List<OffreStage> offres;
+        
+        if (localisation != null && duree != null && secteurNom != null) {
+            offres = offreStageRepository.findByLocalisationContainingIgnoreCaseAndDureeStageAndSecteurNomSecteurContainingIgnoreCase(localisation, duree, secteurNom);
+        } else if (localisation != null && duree != null) {
+            offres = offreStageRepository.findByLocalisationContainingIgnoreCaseAndDureeStage(localisation, duree);
+        } else if (localisation != null && secteurNom != null) {
+            offres = offreStageRepository.findByLocalisationContainingIgnoreCaseAndSecteurNomSecteurContainingIgnoreCase(localisation, secteurNom);
+        } else if (duree != null && secteurNom != null) {
+            offres = offreStageRepository.findByDureeStageAndSecteurNomSecteurContainingIgnoreCase(duree, secteurNom);
+        } else if (localisation != null) {
+            offres = offreStageRepository.findByLocalisationContainingIgnoreCase(localisation);
+        } else if (duree != null) {
+            offres = offreStageRepository.findByDureeStage(duree);
+        } else if (secteurNom != null) {
+            offres = offreStageRepository.findBySecteurNomSecteurContainingIgnoreCase(secteurNom);
+        } else {
+            offres = offreStageRepository.findAll();
+        }
 
         return offreStageMapper.offresStageToOffresStageResponseDTOs(offres);
     }
+
 
     @Override
     public OffreStageResponseDTO updateOffreStage(Long id, OffreStageDTO offreStageDTO) {

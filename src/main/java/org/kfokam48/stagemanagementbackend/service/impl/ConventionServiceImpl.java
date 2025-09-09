@@ -10,6 +10,7 @@ import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.CandidatureMapper;
 import org.kfokam48.stagemanagementbackend.mapper.ConventionMapper;
 import org.kfokam48.stagemanagementbackend.minio.MinIOService;
+import org.kfokam48.stagemanagementbackend.service.pdf.PdfService;
 import org.kfokam48.stagemanagementbackend.model.Administrateur;
 import org.kfokam48.stagemanagementbackend.model.Candidature;
 import org.kfokam48.stagemanagementbackend.model.ConventionStage;
@@ -25,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -41,8 +43,9 @@ public class ConventionServiceImpl implements ConventionService {
     private final EnseignantRepository enseignantRepository;
     private final AdministrateurRepository administrateurRepository;
     private final NotificationController notificationController;
+    private final PdfService pdfService;
 
-    public ConventionServiceImpl(ConventionStageRepository conventionStageRepository, ConventionMapper conventionMapper, MinIOService minIOService, CandidatureMapper candidatureMapper, CandidatureRepository candidatureRepository, EnseignantRepository enseignantRepository, AdministrateurRepository administrateurRepository, NotificationController notificationController) {
+    public ConventionServiceImpl(ConventionStageRepository conventionStageRepository, ConventionMapper conventionMapper, MinIOService minIOService, CandidatureMapper candidatureMapper, CandidatureRepository candidatureRepository, EnseignantRepository enseignantRepository, AdministrateurRepository administrateurRepository, NotificationController notificationController, PdfService pdfService) {
         this.conventionStageRepository = conventionStageRepository;
         this.conventionMapper = conventionMapper;
         this.minIOService = minIOService;
@@ -51,6 +54,7 @@ public class ConventionServiceImpl implements ConventionService {
         this.enseignantRepository = enseignantRepository;
         this.notificationController = notificationController;
         this.administrateurRepository = administrateurRepository;
+        this.pdfService = pdfService;
     }
 
     @Override
@@ -60,7 +64,7 @@ public class ConventionServiceImpl implements ConventionService {
     }
 
     @Override
-    public ConventionResponseDTO createConvention(ConventionRequestDTO conventionRequestDTO, MultipartFile file) throws Exception {
+    public ConventionResponseDTO createConvention(ConventionRequestDTO conventionRequestDTO) throws Exception {
         // Vérifier que la candidature existe
         Candidature candidature = candidatureRepository.findById(conventionRequestDTO.getIdCandidature())
                 .orElseThrow(() -> new RessourceNotFoundException("Candidature introuvable avec l'ID: " + conventionRequestDTO.getIdCandidature()));
@@ -87,21 +91,12 @@ public class ConventionServiceImpl implements ConventionService {
             throw new RuntimeException("Échec du calcul de la date de fin: " + e.getMessage());
         }
         
-        // Upload du fichier vers MinIO
-        if (file != null && !file.isEmpty()) {
-            try {
-                String fileUrl = minIOService.uploadFile(file);
-                conventionStage.setPdfConventionPath(fileUrl);
-            } catch (Exception e) {
-                throw new RuntimeException("Échec de l'upload du fichier PDF: " + e.getMessage());
-            }
-        }
-        
         conventionStageRepository.save(conventionStage);
+        notificationController.sendNotification(1L,"Convention created", "Nouvelle convention creer",false);
         return conventionMapper.conventionStageToConventionResponseDTO(conventionStage);
     }
     @Override
-    public ConventionResponseDTO updateConvention(Long conventionId,Long idCandidature, MultipartFile file) throws Exception {
+    public ConventionResponseDTO updateConvention(Long conventionId, Long idCandidature) throws Exception {
         ConventionStage conventionStage = conventionStageRepository.findById(conventionId)
                 .orElseThrow(() -> new RessourceNotFoundException("Convention introuvable avec l'ID: " + conventionId));
         
@@ -129,17 +124,27 @@ public class ConventionServiceImpl implements ConventionService {
         
         conventionStage.setStatutConvention(StatutConvention.EN_ATTENTE);
         
-        // Upload du fichier vers MinIO
-        if (file != null && !file.isEmpty()) {
+        conventionStageRepository.save(conventionStage);
+        
+        // Envoyer notification aux enseignants de la même filière
+        String filiereEtudiant = conventionStage.getCandidature().getEtudiant().getFiliere();
+        List<Enseignant> enseignants = enseignantRepository.findByFiliere(filiereEtudiant);
+        
+        for (Enseignant enseignant : enseignants) {
             try {
-                String fileUrl = minIOService.uploadFile(file);
-                conventionStage.setPdfConventionPath(fileUrl);
+                notificationController.sendNotification(
+                    enseignant.getId(), 
+                    "Nouvelle convention à valider", 
+                    "Une nouvelle convention de stage a été créée pour l'étudiant " + 
+                    conventionStage.getCandidature().getEtudiant().getFullName() + 
+                    " (" + filiereEtudiant + "). Veuillez la valider.", 
+                    false
+                );
             } catch (Exception e) {
-                throw new RuntimeException("Échec de l'upload du fichier PDF: " + e.getMessage());
+                // Log l'erreur mais ne pas faire échouer la création
             }
         }
         
-        conventionStageRepository.save(conventionStage);
         return conventionMapper.conventionStageToConventionResponseDTO(conventionStage);
     }
 
@@ -170,6 +175,15 @@ public class ConventionServiceImpl implements ConventionService {
     }
 
     @Override
+    public List<ConventionResponseDTO> findConventionsByEnseignant(Long enseignantId) {
+        Enseignant enseignant = enseignantRepository.findById(enseignantId)
+                .orElseThrow(() -> new RessourceNotFoundException("Enseignant introuvable avec l'ID: " + enseignantId));
+        
+        List<ConventionStage> conventions = conventionStageRepository.findByCandidatureEtudiantFiliere(enseignant.getFiliere());
+        return conventionMapper.conventionStageToConventionResponseDTOList(conventions);
+    }
+
+    @Override
     public ConventionResponseDTO validateConventionByEnseignant(Long enseigantId, Long conventionId) throws IOException {
         Enseignant enseignant = enseignantRepository.findById(enseigantId).orElseThrow(()-> new RessourceNotFoundException("Enseignant not Found"));
         ConventionStage conventionStage = conventionStageRepository.findById(conventionId).orElseThrow(()-> new RessourceNotFoundException("Convention not Found"));
@@ -179,6 +193,7 @@ public class ConventionServiceImpl implements ConventionService {
         conventionStageRepository.save(conventionStage);
         Long entrepriseID = conventionStage.getCandidature().getOffreStage().getEntreprise().getId();
         notificationController.sendNotification(entrepriseID, "Convention Validated", "Votre convention du : "+conventionStage.getDateCreation()+" a été validé ",false);
+        notificationController.sendNotification(1L, "Convention Validated", "La convention N): "+conventionStage.getId()+" a été validé votre aprobation est attendu ", false);
         return conventionMapper.conventionStageToConventionResponseDTO(conventionStage);
     }
 
@@ -191,24 +206,25 @@ public class ConventionServiceImpl implements ConventionService {
         conventionStage.setAprouvalAdministrator(administrateur);
         conventionStageRepository.save(conventionStage);
         Long entrepriseID = conventionStage.getCandidature().getOffreStage().getEntreprise().getId();
+        Long etudiantId = conventionStage.getCandidature().getEtudiant().getId();
         notificationController.sendNotification(entrepriseID, "Convention Aprouved","Votre convention du : "+conventionStage.getDateCreation()+" a été approuvé ",false);
+        notificationController.sendNotification(etudiantId, "Convention Aprouved", "Convention de stage deja disponible) ", false);
         return conventionMapper.conventionStageToConventionResponseDTO(conventionStage);
     }
     @Override
-    public ResponseEntity<byte[]> downloadConvention(Long conventionId) throws Exception {
+    public ResponseEntity<byte[]> generateConventionPdf(Long conventionId) throws Exception {
         ConventionStage conventionStage = conventionStageRepository.findById(conventionId)
-                .orElseThrow(() -> new RessourceNotFoundException("Convention not Found"));
+                .orElseThrow(() -> new RessourceNotFoundException("Convention introuvable avec l'ID: " + conventionId));
 
-        String fileUrl = conventionStage.getPdfConventionPath();
-
-        // ✅ Télécharger le fichier depuis MinIO via URL
-        InputStream inputStream = new URL(fileUrl).openStream();
-        byte[] fileBytes = inputStream.readAllBytes();
+        ByteArrayOutputStream pdfStream = pdfService.generateConventionPdf(conventionStage);
+        byte[] pdfBytes = pdfStream.toByteArray();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "convention_" + conventionId + ".pdf");
 
-        return ResponseEntity.ok().headers(headers).body(fileBytes);
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
+
 
 }
