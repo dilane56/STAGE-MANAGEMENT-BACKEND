@@ -43,4 +43,20 @@ public class StatsController {
         response.put("data", stats);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/monthly-evolution")
+    public ResponseEntity<Map<String, Object>> getMonthlyEvolution() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", statsService.getMonthlyEvolution());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/internships-by-sector")
+    public ResponseEntity<Map<String, Object>> getInternshipsBySector() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", statsService.getInternshipsBySector());
+        return ResponseEntity.ok(response);
+    }
 }

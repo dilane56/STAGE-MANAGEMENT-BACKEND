@@ -23,4 +23,10 @@ public interface OffreStageRepository extends JpaRepository<OffreStage, Long> {
     List<OffreStage> findOffreStageBySecteur(Secteur secteur);
     List<OffreStage> findByEntrepriseId(Long entrepriseId);
     Long countByEntrepriseId(Long entrepriseId);
+    
+    @Query("SELECT EXTRACT(MONTH FROM o.datePublication) as month, COUNT(o) FROM OffreStage o WHERE EXTRACT(YEAR FROM o.datePublication) = EXTRACT(YEAR FROM CURRENT_DATE) GROUP BY EXTRACT(MONTH FROM o.datePublication) ORDER BY month")
+    List<Object[]> countInternshipsByMonth();
+    
+    @Query("SELECT s.nomSecteur, COUNT(o) FROM OffreStage o JOIN o.secteur s GROUP BY s.nomSecteur ORDER BY COUNT(o) DESC")
+    List<Object[]> countInternshipsBySector();
 }

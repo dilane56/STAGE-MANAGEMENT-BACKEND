@@ -7,6 +7,11 @@ import org.kfokam48.stagemanagementbackend.repository.*;
 import org.kfokam48.stagemanagementbackend.service.StatsService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.stream.Collectors;
+
 @Service
 public class StatsServiceImpl implements StatsService {
     
@@ -66,5 +71,54 @@ public class StatsServiceImpl implements StatsService {
         stats.setActiveInternships(offreStageRepository.count()); // Ajuster selon statut
         stats.setPendingConventions(conventionRepository.countByStatutConvention(StatutConvention.EN_ATTENTE));
         return stats;
+    }
+
+    @Override
+    public List<MonthlyEvolutionDTO> getMonthlyEvolution() {
+        List<Object[]> internshipsData = offreStageRepository.countInternshipsByMonth();
+        List<Object[]> applicationsData = candidatureRepository.countApplicationsByMonth();
+        
+        Map<Integer, Long> internshipsMap = internshipsData.stream()
+            .collect(Collectors.toMap(
+                data -> ((Number) data[0]).intValue(),
+                data -> ((Number) data[1]).longValue()
+            ));
+            
+        Map<Integer, Long> applicationsMap = applicationsData.stream()
+            .collect(Collectors.toMap(
+                data -> ((Number) data[0]).intValue(),
+                data -> ((Number) data[1]).longValue()
+            ));
+        
+        List<MonthlyEvolutionDTO> evolution = new ArrayList<>();
+        String[] monthNames = {"Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"};
+        
+        for (int month = 1; month <= 12; month++) {
+            evolution.add(new MonthlyEvolutionDTO(
+                monthNames[month - 1],
+                internshipsMap.getOrDefault(month, 0L),
+                applicationsMap.getOrDefault(month, 0L)
+            ));
+        }
+        
+        return evolution;
+    }
+
+    @Override
+    public List<InternshipsBySectorDTO> getInternshipsBySector() {
+        List<Object[]> sectorsData = offreStageRepository.countInternshipsBySector();
+        String[] colors = {"#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#f97316", "#84cc16"};
+        
+        List<InternshipsBySectorDTO> sectors = new ArrayList<>();
+        for (int i = 0; i < sectorsData.size() && i < colors.length; i++) {
+            Object[] data = sectorsData.get(i);
+            sectors.add(new InternshipsBySectorDTO(
+                (String) data[0],
+                ((Number) data[1]).longValue(),
+                colors[i]
+            ));
+        }
+        
+        return sectors;
     }
 }
