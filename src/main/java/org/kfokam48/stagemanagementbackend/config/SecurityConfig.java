@@ -53,14 +53,10 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/api/auth/login",
                                 "/api/auth/register",
-                                "/api/auth/refresh"
+                                "/api/auth/refresh",
+                                "/ws-chat/**"
                         ).permitAll()
 
-//                        // Restreindre l'accès aux endpoints spécifiques
-//                        .requestMatchers("/api/medecins/**").hasRole("MEDECIN") // Accès uniquement pour les médecins
-//                        .requestMatchers("/api/secretaire/**").hasRole("SECRETAIRE") // Accès uniquement pour les secrétaires
-//                        .requestMatchers("/api/utilisateurs/**").hasRole("ADMIN") // Accès uniquement pour les administrateurs
-//                        .requestMatchers("/api/**").hasRole("ADMIN") // Accès uniquement pour les administrateurs
 
                         // Restreindre l'accès à tous les autres endpoints
                         .anyRequest().authenticated())

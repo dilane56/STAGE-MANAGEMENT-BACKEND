@@ -20,4 +20,5 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Long> 
     
     @Query("SELECT EXTRACT(MONTH FROM c.dateCandidature) as month, COUNT(c) FROM Candidature c WHERE EXTRACT(YEAR FROM c.dateCandidature) = EXTRACT(YEAR FROM CURRENT_DATE) GROUP BY EXTRACT(MONTH FROM c.dateCandidature) ORDER BY month")
     List<Object[]> countApplicationsByMonth();
+
 }

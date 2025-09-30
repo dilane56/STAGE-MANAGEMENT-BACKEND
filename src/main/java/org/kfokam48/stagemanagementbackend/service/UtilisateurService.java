@@ -1,5 +1,6 @@
 package org.kfokam48.stagemanagementbackend.service;
 
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.Contact;
 import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurResponseDTO;
 import org.springframework.http.ResponseEntity;
 
@@ -13,5 +14,9 @@ public interface UtilisateurService {
     public List<UtilisateurResponseDTO> getAllUtilisateurs();
     public ResponseEntity<String> deleteUtilisateurById(Long id);
     boolean existsByEmail(String email);
+    List<Contact> findAllContacts();
+    List<Contact> findAllEntrepriseContacts(Long entrepriseId);
+    List<Contact>findAllCandidatContact(Long etudaiantId);
+
 
 }

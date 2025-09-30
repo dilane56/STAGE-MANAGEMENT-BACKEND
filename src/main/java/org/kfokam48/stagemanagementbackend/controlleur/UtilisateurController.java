@@ -1,8 +1,10 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 
 
+import org.kfokam48.stagemanagementbackend.dto.utilisateur.Contact;
 import org.kfokam48.stagemanagementbackend.dto.utilisateur.UtilisateurResponseDTO;
 import org.kfokam48.stagemanagementbackend.service.UtilisateurService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -60,5 +62,23 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateurService.existsByEmail(email));
     }
 
+    @GetMapping("/contacts")
+    public ResponseEntity<List<Contact>> getAllContacts() {
+        List<Contact> contacts = utilisateurService.findAllContacts();
+        return new ResponseEntity<>(contacts, HttpStatus.OK);
+    }
 
+    @GetMapping("/contacts/entreprise/{id}")
+    @PreAuthorize("hasRole('ENTREPRISE')")
+    public ResponseEntity<List<Contact>> getEntrepriseContacts( @PathVariable Long id) {
+        List<Contact> contacts = utilisateurService.findAllEntrepriseContacts(id);
+        return new ResponseEntity<>(contacts, HttpStatus.OK);
+    }
+
+    @GetMapping("/contacts/candidat/{id}")
+    @PreAuthorize("hasRole('ETUDIANT')")
+    public ResponseEntity<List<Contact>> getCandidatContacts(@PathVariable Long id) {
+        List<Contact> contacts = utilisateurService.findAllCandidatContact(id);
+        return new ResponseEntity<>(contacts, HttpStatus.OK);
+    }
 }
