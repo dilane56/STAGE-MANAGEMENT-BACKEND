@@ -1,5 +1,23 @@
 # STAGE-MANAGEMENT-BACKEND
 
+## Description
+API REST pour la gestion des stages étudiants. Cette application permet la gestion complète du processus de stages : création d'offres, candidatures, conventions, et communication entre les différents acteurs.
+
+## Technologies
+- **Backend:** Spring Boot 3.x, Spring Security, JPA/Hibernate
+- **Base de données:** PostgreSQL
+- **Stockage fichiers:** MinIO
+- **Documentation:** Swagger/OpenAPI
+- **Authentification:** JWT
+
+## Rôles utilisateurs
+- **ADMIN:** Administrateur système
+- **ENTREPRISE:** Entreprises proposant des stages
+- **ETUDIANT:** Étudiants cherchant des stages
+- **ENSEIGNANT:** Enseignants validant les conventions
+
+---
+
 ## API Documentation
 
 ### Authentication Endpoints
@@ -28,18 +46,14 @@ POST /api/auth/login
       "fullName": "John Doe",
       "telephone": "+1234567890",
       "avatar": "avatar_url",
-      "role": "etudiant",
+      "role": "ETUDIANT",
       "createAt": "2024-01-01",
       "updateAt": "2024-01-01",
       "profile": {
         "filiere": "Informatique",
         "anneeScolaire": "2023-2024",
         "niveau": "Master 2",
-        "universite": "Université XYZ",
-        "domaineActivite": null,
-        "siteWeb": null,
-        "description": null,
-        "dateCreation": null
+        "universite": "Université XYZ"
       }
     },
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -48,40 +62,9 @@ POST /api/auth/login
 }
 ```
 
-**Profile Fields by User Type:**
-
-- **Etudiant:** `filiere`, `anneeScolaire`, `niveau`, `universite`
-- **Entreprise:** `domaineActivite`, `siteWeb`, `description`, `dateCreation`
-- **Enseignant:** `universite`
-- **Administrateur:** Tous les champs à null
-
 #### 2. Refresh Token
 ```
 POST /api/auth/refresh
-```
-
-**Request Body:**
-```json
-{
-  "refreshToken": "refresh_token_here"
-}
-```
-
-**Response (Success):**
-```json
-{
-  "success": true,
-  "token": "new_access_token"
-}
-```
-
-**Response (Expired):**
-```json
-{
-  "success": false,
-  "error": "REFRESH_TOKEN_EXPIRED",
-  "message": "Refresh token expiré, reconnexion requise"
-}
 ```
 
 #### 3. Logout
@@ -89,312 +72,323 @@ POST /api/auth/refresh
 POST /api/auth/logout
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Déconnexion réussie"
-}
-```
+---
 
-## Token Management
+### User Management Endpoints
 
-- **Access Token:** 15 minutes expiration
-- **Refresh Token:** 7 days expiration
-- **Usage:** Include access token in Authorization header: `Bearer <token>`
-
-## User Management Endpoints
-
-### 1. Get All Users (Admin only)
+#### 1. Get All Users (Admin only)
 ```
 GET /api/users
 ```
-
 **Query Parameters:**
 - `page`: number (default: 0)
 - `size`: number (default: 10)
-- `role`: string (optional: ETUDIANT, ENTREPRISE, ENSEIGNANT, ADMIN)
-- `search`: string (optional: search by name or email)
+- `role`: string (ETUDIANT, ENTREPRISE, ENSEIGNANT, ADMIN)
+- `search`: string (search by name or email)
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "users": [
-      {
-        "id": 1,
-        "email": "user@example.com",
-        "fullName": "John Doe",
-        "telephone": "+1234567890",
-        "avatar": "avatar_url",
-        "role": "ETUDIANT",
-        "createAt": "2024-01-01",
-        "updateAt": "2024-01-01",
-        "profile": {
-          "filiere": "Informatique",
-          "anneeScolaire": "2023-2024",
-          "niveau": "Master 2",
-          "universite": "Université XYZ",
-          "domaineActivite": null,
-          "siteWeb": null,
-          "description": null,
-          "dateCreation": null
-        }
-      }
-    ],
-    "totalElements": 100,
-    "totalPages": 10,
-    "currentPage": 0,
-    "size": 10
-  }
-}
-```
-
-### 2. Get User by ID
+#### 2. Get User by ID
 ```
 GET /api/users/{id}
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "user@example.com",
-    "fullName": "John Doe",
-    "telephone": "+1234567890",
-    "avatar": "avatar_url",
-    "role": "ETUDIANT",
-    "createAt": "2024-01-01",
-    "updateAt": "2024-01-01",
-    "profile": {
-      "filiere": "Informatique",
-      "anneeScolaire": "2023-2024",
-      "niveau": "Master 2",
-      "universite": "Université XYZ",
-      "domaineActivite": null,
-      "siteWeb": null,
-      "description": null,
-      "dateCreation": null
-    }
-  }
-}
-```
-
-### 3. Create Student
+#### 3. Create Student
 ```
 POST /api/etudiants
 ```
 
-**Request Body:**
-```json
-{
-  "email": "etudiant@example.com",
-  "password": "password123",
-  "fullName": "Jean Dupont",
-  "telephone": "+1234567890",
-  "avatar": "avatar_url",
-  "filiere": "Informatique",
-  "anneeScolaire": "2023-2024",
-  "niveau": "Master 2",
-  "universite": "Université XYZ"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "etudiant@example.com",
-    "fullName": "Jean Dupont",
-    "telephone": "+1234567890",
-    "avatar": "avatar_url",
-    "role": "ETUDIANT",
-    "filiere": "Informatique",
-    "anneeScolaire": "2023-2024",
-    "niveau": "Master 2",
-    "universite": "Université XYZ",
-    "createAt": "2024-01-01",
-    "updateAt": "2024-01-01"
-  }
-}
-```
-
-### 4. Create Company
+#### 4. Create Company
 ```
 POST /api/entreprises
 ```
 
-**Request Body:**
-```json
-{
-  "email": "entreprise@example.com",
-  "password": "password123",
-  "fullName": "Tech Corp",
-  "telephone": "+1234567890",
-  "avatar": "logo_url",
-  "domaineActivite": "Technologie",
-  "siteWeb": "https://techcorp.com",
-  "description": "Entreprise de technologie",
-  "dateCreation": "2020-01-01"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "entreprise@example.com",
-    "fullName": "Tech Corp",
-    "telephone": "+1234567890",
-    "avatar": "logo_url",
-    "role": "ENTREPRISE",
-    "domaineActivite": "Technologie",
-    "siteWeb": "https://techcorp.com",
-    "description": "Entreprise de technologie",
-    "dateCreation": "2020-01-01",
-    "createAt": "2024-01-01",
-    "updateAt": "2024-01-01"
-  }
-}
-```
-
-### 5. Create Teacher
+#### 5. Create Teacher
 ```
 POST /api/enseignants
 ```
 
-**Request Body:**
-```json
-{
-  "email": "enseignant@example.com",
-  "password": "password123",
-  "fullName": "Dr. Marie Martin",
-  "telephone": "+1234567890",
-  "avatar": "avatar_url",
-  "universite": "Université XYZ",
-  "specialite": "Informatique",
-  "grade": "Professeur",
-  "departement": "Sciences Informatiques"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "enseignant@example.com",
-    "fullName": "Dr. Marie Martin",
-    "telephone": "+1234567890",
-    "avatar": "avatar_url",
-    "role": "ENSEIGNANT",
-    "universite": "Université XYZ",
-    "specialite": "Informatique",
-    "grade": "Professeur",
-    "departement": "Sciences Informatiques",
-    "createAt": "2024-01-01",
-    "updateAt": "2024-01-01"
-  }
-}
-```
-
-### 6. Create Administrator
+#### 6. Create Administrator
 ```
 POST /api/administrateurs
 ```
 
-**Request Body:**
-```json
-{
-  "email": "admin@example.com",
-  "password": "password123",
-  "fullName": "Admin User",
-  "telephone": "+1234567890",
-  "avatar": "avatar_url"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "email": "admin@example.com",
-    "fullName": "Admin User",
-    "telephone": "+1234567890",
-    "avatar": "avatar_url",
-    "role": "ADMIN",
-    "createAt": "2024-01-01",
-    "updateAt": "2024-01-01"
-  }
-}
-```
-
-### 7. Update Student
+#### 7. Update Users
 ```
 PUT /api/etudiants/{id}
-```
-
-**Request Body:**
-```json
-{
-  "email": "etudiant@example.com",
-  "password": "newpassword123",
-  "fullName": "Jean Dupont",
-  "telephone": "+1234567890",
-  "avatar": "avatar_url",
-  "filiere": "Informatique",
-  "anneeScolaire": "2023-2024",
-  "niveau": "Master 2",
-  "universite": "Université XYZ"
-}
-```
-
-### 8. Update Company
-```
 PUT /api/entreprises/{id}
-```
-
-### 9. Update Teacher
-```
 PUT /api/enseignants/{id}
-```
-
-### 10. Update Administrator
-```
 PUT /api/administrateurs/{id}
 ```
 
-### 11. Delete User
+#### 8. Delete User
 ```
 DELETE /api/users/{id}
 ```
 
-**Response:**
+---
+
+### Contacts Endpoints
+
+#### 1. Get All Contacts
+```
+GET /api/utilisateurs/contacts
+```
+
+#### 2. Get Enterprise Contacts
+```
+GET /api/utilisateurs/contacts/entreprise
+```
+**Autorisation:** ENTREPRISE
+**Description:** Retourne les étudiants ayant postulé + les admins
+
+#### 3. Get Student Contacts
+```
+GET /api/utilisateurs/contacts/candidat
+```
+**Autorisation:** ETUDIANT
+**Description:** Retourne les entreprises auxquelles l'étudiant a postulé
+
+---
+
+### Internship Offers Endpoints
+
+#### 1. Get All Offers
+```
+GET /api/offres-stage
+```
+**Autorisation:** ADMIN, ETUDIANT, ENSEIGNANT
+
+#### 2. Get Offer by ID
+```
+GET /api/offres-stage/{id}
+```
+**Autorisation:** ENTREPRISE, ADMIN, ETUDIANT
+
+#### 3. Create Offer
+```
+POST /api/offres-stage
+```
+**Autorisation:** ENTREPRISE, ADMIN
+
+**Request Body:**
 ```json
 {
-  "success": true,
-  "message": "User deleted successfully"
+  "intitule": "Développeur Full Stack",
+  "description": "Développement d'applications web",
+  "localisation": "Paris",
+  "dureeStage": 6,
+  "competences": ["Java", "React", "Spring Boot"],
+  "datePublication": "2024-01-01",
+  "dateLimiteCandidature": "2024-02-01T23:59:59",
+  "nombrePlaces": 2,
+  "secteurId": 1,
+  "dateDebutStage": "2024-03-01"
 }
 ```
 
-### 12. Get Dashboard Statistics
+#### 4. Update Offer
+```
+PUT /api/offres-stage/{id}
+```
+**Autorisation:** ENTREPRISE, ADMIN
+
+#### 5. Delete Offer
+```
+DELETE /api/offres-stage/{id}
+```
+**Autorisation:** ADMIN
+
+#### 6. Filter Offers
+```
+GET /api/offres-stage/filtrer
+```
+**Query Parameters:**
+- `localisation`: string (optional)
+- `duree`: integer (optional)
+- `secteurNom`: string (optional)
+
+#### 7. Get Offers by Company
+```
+GET /api/offres-stage/entreprise/{entrepriseId}
+```
+**Autorisation:** ENTREPRISE, ADMIN
+
+#### 8. Add Competence to Offer
+```
+POST /api/offres-stage/{id}/competences
+```
+
+---
+
+### Applications Endpoints
+
+#### 1. Get All Applications
+```
+GET /api/candidatures
+```
+**Autorisation:** ADMIN
+
+#### 2. Get Application by ID
+```
+GET /api/candidatures/{id}
+```
+**Autorisation:** ETUDIANT, ADMIN
+
+#### 3. Create Application
+```
+POST /api/candidatures/ajouter
+```
+**Autorisation:** ETUDIANT, ADMIN
+**Content-Type:** multipart/form-data
+
+**Form Data:**
+- `idEtudiant`: Long
+- `idOffre`: Long
+- `cv`: MultipartFile (PDF)
+- `lettreMotivation`: String
+
+#### 4. Update Application
+```
+PUT /api/candidatures/{id}
+```
+**Autorisation:** ETUDIANT, ADMIN
+**Content-Type:** multipart/form-data
+
+#### 5. Delete Application
+```
+DELETE /api/candidatures/{id}
+```
+**Autorisation:** ETUDIANT, ADMIN
+
+#### 6. Get Applications by Student
+```
+GET /api/candidatures/etudiant/{etudiantId}
+```
+**Autorisation:** ETUDIANT, ADMIN
+
+#### 7. Get Applications by Company
+```
+GET /api/candidatures/entreprise/{entrepriseId}
+```
+**Autorisation:** ENTREPRISE, ADMIN
+
+#### 8. Update Application Status
+```
+PUT /api/candidatures/{id}/statut
+```
+**Autorisation:** ENTREPRISE, ADMIN
+**Parameters:**
+- `statut`: String (EN_ATTENTE, ACCEPTE, REFUSE)
+- `message`: String (optional)
+
+#### 9. Download CV
+```
+GET /api/candidatures/downloadCV/{id}/cv
+```
+
+---
+
+### Conventions Endpoints
+
+#### 1. Get All Conventions
+```
+GET /api/conventions
+```
+**Autorisation:** ENTREPRISE, ADMIN, ENSEIGNANT
+
+#### 2. Get Convention by ID
+```
+GET /api/conventions/{id}
+```
+**Autorisation:** ENTREPRISE, ADMIN, ENSEIGNANT
+
+#### 3. Create Convention
+```
+POST /api/conventions
+```
+**Autorisation:** ENTREPRISE, ADMIN
+
+#### 4. Update Convention
+```
+PUT /api/conventions/{id}
+```
+**Autorisation:** ENTREPRISE, ADMIN, ENSEIGNANT
+
+#### 5. Delete Convention
+```
+DELETE /api/conventions/{id}
+```
+**Autorisation:** ADMIN
+
+#### 6. Get Conventions by Company
+```
+GET /api/conventions/entreprise/{entrepriseId}
+```
+**Autorisation:** ENTREPRISE, ADMIN
+
+#### 7. Get Conventions by Teacher
+```
+GET /api/conventions/enseignant/{enseignantId}
+```
+**Autorisation:** ENSEIGNANT, ADMIN
+
+#### 8. Validate Convention (Teacher)
+```
+PUT /api/conventions/{id}/valider-enseignant/{enseignantId}
+```
+**Autorisation:** ENSEIGNANT
+
+#### 9. Approve Convention (Admin)
+```
+PUT /api/conventions/{id}/approuver-administrateur/{adminId}
+```
+**Autorisation:** ADMIN
+
+#### 10. Generate Convention PDF
+```
+GET /api/conventions/{id}/generate-pdf
+```
+**Autorisation:** ADMIN, ENSEIGNANT, ENTREPRISE
+
+---
+
+### Sectors Endpoints
+
+#### 1. Get All Sectors
+```
+GET /api/v1/secteurs
+```
+
+#### 2. Get Sector by ID
+```
+GET /api/v1/secteurs/{id}
+```
+
+#### 3. Create Sector
+```
+POST /api/v1/secteurs
+```
+
+#### 4. Update Sector
+```
+PUT /api/v1/secteurs/{id}
+```
+
+#### 5. Delete Sector
+```
+DELETE /api/v1/secteurs/{id}
+```
+
+---
+
+### Statistics Endpoints
+
+#### 1. Dashboard Statistics
 ```
 GET /api/stats/dashboard
 ```
+**Description:** Retourne des statistiques selon le rôle de l'utilisateur connecté
 
-**Response (varies by user role):**
-
-**For Student:**
+**Response for Student:**
 ```json
 {
   "success": true,
@@ -407,7 +401,7 @@ GET /api/stats/dashboard
 }
 ```
 
-**For Company:**
+**Response for Company:**
 ```json
 {
   "success": true,
@@ -420,7 +414,7 @@ GET /api/stats/dashboard
 }
 ```
 
-**For Teacher:**
+**Response for Teacher:**
 ```json
 {
   "success": true,
@@ -433,7 +427,7 @@ GET /api/stats/dashboard
 }
 ```
 
-**For Admin:**
+**Response for Admin:**
 ```json
 {
   "success": true,
@@ -447,3 +441,111 @@ GET /api/stats/dashboard
   }
 }
 ```
+
+#### 2. Monthly Evolution Statistics
+```
+GET /api/stats/monthly-evolution
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "month": "Jan",
+      "internships": 12,
+      "applications": 45
+    },
+    {
+      "month": "Fév", 
+      "internships": 18,
+      "applications": 67
+    }
+  ]
+}
+```
+
+#### 3. Internships by Sector Statistics
+```
+GET /api/stats/internships-by-sector
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "Informatique",
+      "value": 65,
+      "color": "#3b82f6"
+    },
+    {
+      "name": "Marketing", 
+      "value": 28,
+      "color": "#10b981"
+    }
+  ]
+}
+```
+
+---
+
+## Token Management
+
+- **Access Token:** 24 heures d'expiration
+- **Refresh Token:** 7 jours d'expiration
+- **Usage:** Inclure le token d'accès dans l'en-tête Authorization: `Bearer <token>`
+
+---
+
+## Error Responses
+
+### Standard Error Format
+```json
+{
+  "success": false,
+  "error": "ERROR_CODE",
+  "message": "Description de l'erreur"
+}
+```
+
+### Common HTTP Status Codes
+- **200:** Success
+- **201:** Created
+- **400:** Bad Request
+- **401:** Unauthorized
+- **403:** Forbidden
+- **404:** Not Found
+- **500:** Internal Server Error
+
+---
+
+## Installation et Configuration
+
+### Prérequis
+- Java 17+
+- PostgreSQL
+- MinIO Server
+
+### Variables d'environnement
+```properties
+port=8080
+dbName=stage_management
+userName=your_db_username
+password=your_db_password
+```
+
+### Démarrage
+```bash
+./mvnw spring-boot:run
+```
+
+### Documentation Swagger
+Accès à la documentation interactive : `http://localhost:8080/swagger-ui.html`
+
+---
+
+## Contact
+Pour toute question ou support, contactez l'équipe de développement.
