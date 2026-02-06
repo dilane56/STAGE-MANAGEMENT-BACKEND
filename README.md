@@ -547,5 +547,46 @@ Accès à la documentation interactive : `http://localhost:8080/swagger-ui.html`
 
 ---
 
+## 🚀 Déploiement en Production
+
+### Déploiement sur Railway ou Render
+
+Votre application est prête pour le déploiement ! Consultez les guides:
+
+- **[QUICK-START.md](QUICK-START.md)** - Déploiement rapide en 5 minutes ⚡
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Guide complet étape par étape 📚
+- **[DEPLOYMENT-SUMMARY.md](DEPLOYMENT-SUMMARY.md)** - Résumé des modifications 📋
+
+### Fichiers de configuration créés:
+- `Dockerfile` - Build Docker optimisé
+- `railway.json` - Configuration Railway
+- `render.yaml` - Configuration Render
+- `application-prod.properties` - Configuration production
+- `.env.example` - Template variables d'environnement
+
+### Démarrage rapide:
+
+#### Railway:
+```bash
+1. Pushez votre code sur GitHub
+2. Créez un projet sur railway.app
+3. Ajoutez PostgreSQL
+4. Configurez les variables d'environnement
+5. Déployez automatiquement
+```
+
+#### Render:
+```bash
+1. Pushez votre code sur GitHub
+2. Créez un Web Service sur render.com
+3. Ajoutez PostgreSQL
+4. Configurez les variables d'environnement
+5. Déployez automatiquement
+```
+
+**Note:** Consultez [QUICK-START.md](QUICK-START.md) pour les instructions détaillées.
+
+---
+
 ## Contact
 Pour toute question ou support, contactez l'équipe de développement.

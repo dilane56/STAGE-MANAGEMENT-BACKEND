@@ -1,6 +1,7 @@
 package org.kfokam48.stagemanagementbackend.config;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig {
 
-
+    @Value("${cors.allowed.origins:http://localhost:4200,http://localhost:3000,http://localhost:5173}")
+    private String allowedOrigins;
 
     private final JwtRequestFillter jwtRequestFilter;
 
@@ -34,14 +36,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable) // Utilisation de la nouvelle API pour d
+        http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors
                         .configurationSource(request -> {
                             var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                            corsConfig.setAllowedOrigins(java.util.List.of("http://localhost:3000", "http://localhost:3001")); // Remplace par l’URL de ton frontend
-                            corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"));
+                            corsConfig.setAllowedOrigins(java.util.Arrays.asList(allowedOrigins.split(",")));
+                            corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                             corsConfig.setAllowedHeaders(java.util.List.of("*"));
                             corsConfig.setAllowCredentials(true);
+                            corsConfig.setMaxAge(3600L);
                             return corsConfig;
                         })
                 )
