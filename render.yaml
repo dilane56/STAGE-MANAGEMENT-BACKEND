@@ -11,3 +11,18 @@ services:
         value: 8080
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      # Cookies d'authentification HttpOnly (HTTPS sur Render)
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: Lax
+      # Origines autorisées pour la connexion directe du chat (WebSocket) : toutes les URL Vercel
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://*.vercel.app
+      # Secrets : à renseigner dans le tableau de bord Render (non versionnés)
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

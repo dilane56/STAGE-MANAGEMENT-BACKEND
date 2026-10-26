@@ -16,12 +16,17 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> 
     Optional<Utilisateur> findByEmail(String email);
     boolean existsByEmail(String email);
     List<Utilisateur> findByStatus(UserStatus status);
-    
+    List<Utilisateur> findByRole(Roles role);
+
     // Contacts pour entreprise : étudiants qui ont postulé + admins
     @Query("SELECT DISTINCT u FROM Utilisateur u WHERE u.role = :adminRole OR u.id IN (SELECT c.etudiant.id FROM Candidature c WHERE c.offreStage.entreprise.id = :entrepriseId)")
     List<Utilisateur> findEntrepriseContacts(@Param("entrepriseId") Long entrepriseId, @Param("adminRole") Roles adminRole);
-    
+
     // Contacts pour étudiant : entreprises auxquelles il a postulé
     @Query("SELECT DISTINCT u FROM Utilisateur u WHERE u.id IN (SELECT c.offreStage.entreprise.id FROM Candidature c WHERE c.etudiant.id = :etudiantId)")
     List<Utilisateur> findEtudiantContacts(@Param("etudiantId") Long etudiantId);
+
+    // Contacts pour enseignant : étudiants de sa filière + admins
+    @Query("SELECT DISTINCT u FROM Utilisateur u WHERE u.role = :adminRole OR u.id IN (SELECT e.id FROM Etudiant e WHERE e.filiere = :filiere)")
+    List<Utilisateur> findEnseignantContacts(@Param("filiere") String filiere, @Param("adminRole") Roles adminRole);
 }

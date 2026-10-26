@@ -24,12 +24,12 @@ SPRING_PROFILES_ACTIVE=prod
 # DATABASE_URL est automatiquement injectée
 
 # JWT
-JWT_SECRET=1Gmn7N06rjiLK02f0L+o1rj5IfI6z1UQUn6B+Hokt0Lrs2XhXbdcYIw/fyr5HcQGKpXLXe5oyXeDU5Sv/mgZ6w==
+JWT_SECRET=<votre-secret-jwt-base64>
 JWT_EXPIRATION=86400000
 
 # Email
 MAIL_USERNAME=kamgaingfotso@gmail.com
-MAIL_PASSWORD=behg oeeu xwbj mdqq
+MAIL_PASSWORD=<votre-mot-de-passe-application-gmail>
 
 # MinIO
 MINIO_URL=http://minio.railway.internal:9000
@@ -71,12 +71,12 @@ DATABASE_URL=postgresql://stage_user:password123@dpg-xxxxx.oregon-postgres.rende
 SPRING_PROFILES_ACTIVE=prod
 
 # JWT
-JWT_SECRET=1Gmn7N06rjiLK02f0L+o1rj5IfI6z1UQUn6B+Hokt0Lrs2XhXbdcYIw/fyr5HcQGKpXLXe5oyXeDU5Sv/mgZ6w==
+JWT_SECRET=<votre-secret-jwt-base64>
 JWT_EXPIRATION=86400000
 
 # Email
 MAIL_USERNAME=kamgaingfotso@gmail.com
-MAIL_PASSWORD=behg oeeu xwbj mdqq
+MAIL_PASSWORD=<votre-mot-de-passe-application-gmail>
 
 # MinIO
 MINIO_URL=http://minio-service.onrender.com:9000
@@ -109,7 +109,7 @@ MINIO_BUCKET_NAME=stage-management
 # Inscrivez-vous sur https://min.io/cloud
 MINIO_URL=https://play.min.io:9000
 MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
-MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+MINIO_SECRET_KEY=<votre-secret-key-minio>
 MINIO_BUCKET_NAME=stage-management
 ```
 

@@ -4,7 +4,6 @@ import org.kfokam48.stagemanagementbackend.dto.reports.ActiveUsersDTO;
 import org.kfokam48.stagemanagementbackend.dto.reports.CompanyPartnersDTO;
 import org.kfokam48.stagemanagementbackend.dto.reports.StagesByFiliereDTO;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public interface ReportsService {
@@ -14,7 +13,7 @@ public interface ReportsService {
     byte[] exportActiveUsersToExcel();
     List<CompanyPartnersDTO> getCompanyPartners();
     byte[] exportCompanyPartnersToExcel();
-    byte[] exportStagesByYear(LocalDate year);
+    byte[] exportStagesByYear(int year);
     byte[] exportSignedConventions();
     byte[] exportAllUsers();
     byte[] exportAllData();

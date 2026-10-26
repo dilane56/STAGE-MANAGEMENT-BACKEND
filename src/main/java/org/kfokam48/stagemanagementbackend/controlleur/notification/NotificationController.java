@@ -3,12 +3,9 @@ package org.kfokam48.stagemanagementbackend.controlleur.notification;
 import lombok.RequiredArgsConstructor;
 
 import org.kfokam48.stagemanagementbackend.dto.notification.NotificationResponseDTO;
-import org.kfokam48.stagemanagementbackend.model.Notification;
 import org.kfokam48.stagemanagementbackend.service.notification.NotificationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,12 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Lecture des notifications de l'utilisateur connecté.
+ * L'envoi de notifications se fait désormais via NotificationService.sendNotification.
+ */
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
-    private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
 
 
@@ -38,17 +38,5 @@ public class NotificationController {
     public ResponseEntity<String> markAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
         return ResponseEntity.ok("Notification marquée comme lue");
-    }
-
-    public void sendNotification(Long recepteurId, String title, String message, boolean sendMail) {
-        Notification notif = notificationService.createnotifcation(recepteurId, title, message, sendMail);
-        NotificationResponseDTO responseDTO = notificationService.convertToNotificationResponseDTO(notif);
-
-        // envoi temps réel via STOMP
-        messagingTemplate.convertAndSendToUser(
-                recepteurId.toString(),
-                "/notifications",
-                responseDTO
-        );
     }
 }

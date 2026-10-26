@@ -1,6 +1,5 @@
 package org.kfokam48.stagemanagementbackend.chat;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.kfokam48.stagemanagementbackend.chat.conversation.ConversationResponseDTO;
@@ -21,17 +20,34 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatService {
 
+    /** Taille maximale d'un message (la colonne "contenu" est un VARCHAR(255) par défaut). */
+    private static final int MAX_MESSAGE_LENGTH = 255;
+
     private final ConversationRepository conversationRepo;
     private final MessageRepository messageRepo;
     private final UtilisateurRepository userRepo;
     private final MessageMapper messageMapper;
 
     @Transactional
-    public Message sendMessages(@Valid MessageDTO messageDTO){
+    public Message sendMessages(MessageDTO messageDTO){
+        if (messageDTO.getExpediteurId() == null || messageDTO.getDestinataireId() == null) {
+            throw new IllegalArgumentException("Expéditeur et destinataire sont obligatoires");
+        }
+        if (messageDTO.getExpediteurId().equals(messageDTO.getDestinataireId())) {
+            throw new IllegalArgumentException("Impossible de s'envoyer un message à soi-même");
+        }
+        String contenu = messageDTO.getContenu() == null ? "" : messageDTO.getContenu().trim();
+        if (contenu.isEmpty()) {
+            throw new IllegalArgumentException("Le message ne peut pas être vide");
+        }
+        if (contenu.length() > MAX_MESSAGE_LENGTH) {
+            throw new IllegalArgumentException("Le message ne doit pas dépasser " + MAX_MESSAGE_LENGTH + " caractères");
+        }
+
         Utilisateur sender = userRepo.findById(messageDTO.getExpediteurId())
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+                .orElseThrow(() -> new RessourceNotFoundException("Expéditeur introuvable"));
         Utilisateur receiver = userRepo.findById(messageDTO.getDestinataireId())
-                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+                .orElseThrow(() -> new RessourceNotFoundException("Destinataire introuvable"));
 
         Conversation conversation = conversationRepo
                 .findByParticipants(sender, receiver)
@@ -45,7 +61,7 @@ public class ChatService {
         Message message = new Message();
         message.setConversation(conversation);
         message.setExpediteur(sender);
-        message.setContenu(messageDTO.getContenu());
+        message.setContenu(contenu);
         message.setDestinataire(receiver);
         message.setDateEnvoi(Instant.now());
         message.setMessageStatus(MessageStatus.SENT);
@@ -60,6 +76,7 @@ public class ChatService {
     }
 
     // Récupère l'historique de la conversation entre deux utilisateurs
+    @Transactional
     public List<MessageResponseDTO> getConversation(Long user1Id, Long user2Id) {
         List<Message> messages = messageRepo.findConversation(user1Id, user2Id);
         return messages.stream()
@@ -67,7 +84,6 @@ public class ChatService {
                     // Marquer les messages comme 'DELIVERED' pour le destinataire lorsqu'ils sont récupérés
                     if (message.getDestinataire().getId().equals(user1Id) && message.getMessageStatus() == MessageStatus.SENT) {
                         message.setMessageStatus(MessageStatus.DELIVERED);
-                        messageRepo.save(message); // Sauvegarder l'entité mise à jour
                     }
                     return messageMapper.messageToMessageResponseDTO(message);
                 })
@@ -81,18 +97,19 @@ public class ChatService {
     }
 
     // Récupère les conversations d'un utilisateur avec informations détaillées
+    @Transactional(readOnly = true)
     public List<ConversationResponseDTO> getUserConversations(Long userId) {
         Utilisateur user = userRepo.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
+                .orElseThrow(() -> new RessourceNotFoundException("Utilisateur introuvable"));
+
         List<Conversation> conversations = conversationRepo.findByParticipantsContaining(user);
-        
+
         return conversations.stream()
                 .map(conversation -> {
                     ConversationResponseDTO dto = new ConversationResponseDTO();
                     dto.setConversationId(conversation.getId());
                     dto.setCreatedAt(conversation.getCreatedAt());
-                    
+
                     // Mapper les participants avec IDs et noms complets
                     List<ConversationResponseDTO.ParticipantDTO> participants = conversation.getParticipants().stream()
                             .map(participant -> {
@@ -104,26 +121,27 @@ public class ChatService {
                             })
                             .collect(Collectors.toList());
                     dto.setParticipants(participants);
-                    
+
                     // Compter les messages non lus
                     int unreadCount = messageRepo.countUnreadMessagesInConversation(conversation.getId(), userId);
                     dto.setUnreadCount(unreadCount);
-                    
+
                     // Récupérer le dernier message
                     Message lastMessage = messageRepo.findLastMessageByConversationId(conversation.getId());
                     if (lastMessage != null) {
                         dto.setLastMessage(lastMessage.getContenu());
                         dto.setLastMessageTime(lastMessage.getDateEnvoi());
                     }
-                    
+
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
 
     public void deleteMessage (Long id){
-        Message message = messageRepo.findById(id).orElseThrow(()->new RessourceNotFoundException("message not found"));
+        if (!messageRepo.existsById(id)) {
+            throw new RessourceNotFoundException("message not found");
+        }
         messageRepo.deleteById(id);
-
     }
 }

@@ -17,15 +17,23 @@ import org.kfokam48.stagemanagementbackend.repository.OffreStageRepository;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.ReportsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReportsServiceImpl implements ReportsService {
+
+    private static final String NON_RENSEIGNEE = "Non renseignée";
 
     private final ConventionStageRepository conventionRepository;
     private final UtilisateurRepository utilisateurRepository;
@@ -33,20 +41,36 @@ public class ReportsServiceImpl implements ReportsService {
     private final OffreStageRepository offreStageRepository;
     private final CandidatureRepository candidatureRepository;
 
+    /**
+     * Calcul en mémoire à partir d'une seule requête (auparavant 2 requêtes par filière).
+     * En cours = approuvée et date de fin non dépassée ; terminé = approuvée et date de fin passée
+     * (ce champ n'était jamais renseigné, ce qui faisait planter l'export Excel).
+     */
     @Override
     public List<StagesByFiliereDTO> getStagesByFiliere() {
-        return conventionRepository.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        convention -> convention.getCandidature().getEtudiant().getFiliere(),
-                        Collectors.counting()
-                ))
-                .entrySet().stream()
+        LocalDate today = LocalDate.now();
+        Map<String, List<ConventionStage>> parFiliere = conventionRepository.findAll().stream()
+                .collect(Collectors.groupingBy(convention -> Objects.requireNonNullElse(
+                        convention.getCandidature().getEtudiant().getFiliere(), NON_RENSEIGNEE)));
+
+        return parFiliere.entrySet().stream()
                 .map(entry -> {
+                    List<ConventionStage> conventions = entry.getValue();
                     StagesByFiliereDTO dto = new StagesByFiliereDTO();
                     dto.setFiliere(entry.getKey());
-                    dto.setTotalStages(entry.getValue());
-                    dto.setStagesEnCours(conventionRepository.countConventionStageByCandidature_Etudiant_FiliereAndStatutConvention(entry.getKey(), StatutConvention.APPROUVE));
-                    dto.setStagesEnAttente(conventionRepository.countConventionStageByCandidature_Etudiant_FiliereAndStatutConvention(entry.getKey(), StatutConvention.EN_ATTENTE));
+                    dto.setTotalStages((long) conventions.size());
+                    dto.setStagesEnCours(conventions.stream()
+                            .filter(c -> c.getStatutConvention() == StatutConvention.APPROUVE)
+                            .filter(c -> c.getDateFin() == null || !c.getDateFin().isBefore(today))
+                            .count());
+                    dto.setStagesTermines(conventions.stream()
+                            .filter(c -> c.getStatutConvention() == StatutConvention.APPROUVE)
+                            .filter(c -> c.getDateFin() != null && c.getDateFin().isBefore(today))
+                            .count());
+                    dto.setStagesEnAttente(conventions.stream()
+                            .filter(c -> c.getStatutConvention() == StatutConvention.EN_ATTENTE
+                                    || c.getStatutConvention() == StatutConvention.VALIDE)
+                            .count());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -55,32 +79,19 @@ public class ReportsServiceImpl implements ReportsService {
     @Override
     public byte[] exportStagesByFiliereToExcel() {
         List<StagesByFiliereDTO> data = getStagesByFiliere();
-        
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        return buildWorkbook(workbook -> {
             Sheet sheet = workbook.createSheet("Stages par Filière");
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Filière");
-            headerRow.createCell(1).setCellValue("Total Stages");
-            headerRow.createCell(2).setCellValue("En Cours");
-            headerRow.createCell(3).setCellValue("Terminés");
-            headerRow.createCell(4).setCellValue("En Attente");
-            
+            header(sheet, "Filière", "Total Stages", "En Cours", "Terminés", "En Attente");
             int rowNum = 1;
             for (StagesByFiliereDTO dto : data) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(dto.getFiliere());
-                row.createCell(1).setCellValue(dto.getTotalStages());
-                row.createCell(2).setCellValue(dto.getStagesEnCours());
-                row.createCell(3).setCellValue(dto.getStagesTermines());
-                row.createCell(4).setCellValue(dto.getStagesEnAttente());
+                row.createCell(1).setCellValue(nz(dto.getTotalStages()));
+                row.createCell(2).setCellValue(nz(dto.getStagesEnCours()));
+                row.createCell(3).setCellValue(nz(dto.getStagesTermines()));
+                row.createCell(4).setCellValue(nz(dto.getStagesEnAttente()));
             }
-            
-            workbook.write(out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
-        }
+        });
     }
 
     @Override
@@ -102,34 +113,20 @@ public class ReportsServiceImpl implements ReportsService {
     @Override
     public byte[] exportActiveUsersToExcel() {
         List<ActiveUsersDTO> data = getActiveUsers();
-        
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        return buildWorkbook(workbook -> {
             Sheet sheet = workbook.createSheet("Utilisateurs Actifs");
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("ID");
-            headerRow.createCell(1).setCellValue("Nom Complet");
-            headerRow.createCell(2).setCellValue("Email");
-            headerRow.createCell(3).setCellValue("Rôle");
-            headerRow.createCell(4).setCellValue("Dernière Connexion");
-            headerRow.createCell(5).setCellValue("Statut");
-            
+            header(sheet, "ID", "Nom Complet", "Email", "Rôle", "Dernière Connexion", "Statut");
             int rowNum = 1;
             for (ActiveUsersDTO dto : data) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(dto.getId());
-                row.createCell(1).setCellValue(dto.getFullName());
+                row.createCell(1).setCellValue(str(dto.getFullName()));
                 row.createCell(2).setCellValue(dto.getEmail());
-                row.createCell(3).setCellValue(dto.getRole().toString());
-                row.createCell(4).setCellValue(dto.getDerniereConnexion() != null ? dto.getDerniereConnexion().toString() : "");
-                row.createCell(5).setCellValue(dto.getStatus());
+                row.createCell(3).setCellValue(str(dto.getRole()));
+                row.createCell(4).setCellValue(str(dto.getDerniereConnexion()));
+                row.createCell(5).setCellValue(str(dto.getStatus()));
             }
-            
-            workbook.write(out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
-        }
+        });
     }
 
     @Override
@@ -140,8 +137,9 @@ public class ReportsServiceImpl implements ReportsService {
                     dto.setId(entreprise.getId());
                     dto.setFullName(entreprise.getFullName());
                     dto.setEmail(entreprise.getEmail());
-                    dto.setDomaineActivite(entreprise.getProfile().getDomaineActivite());
-                    dto.setSiteWeb(entreprise.getProfile().getSiteWeb());
+                    // Lecture directe sur l'entité : le profil embarqué pouvait être null (NullPointerException)
+                    dto.setDomaineActivite(entreprise.getDomaineActivite());
+                    dto.setSiteWeb(entreprise.getSiteWeb());
                     dto.setTotalOffres(offreStageRepository.countByEntrepriseId(entreprise.getId()));
                     dto.setTotalCandidatures(candidatureRepository.countByOffreStageEntrepriseId(entreprise.getId()));
                     return dto;
@@ -152,177 +150,131 @@ public class ReportsServiceImpl implements ReportsService {
     @Override
     public byte[] exportCompanyPartnersToExcel() {
         List<CompanyPartnersDTO> data = getCompanyPartners();
-        
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        return buildWorkbook(workbook -> {
             Sheet sheet = workbook.createSheet("Partenaires Entreprises");
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("ID");
-            headerRow.createCell(1).setCellValue("Nom Entreprise");
-            headerRow.createCell(2).setCellValue("Email");
-            headerRow.createCell(3).setCellValue("Domaine d'Activité");
-            headerRow.createCell(4).setCellValue("Site Web");
-            headerRow.createCell(5).setCellValue("Total Offres");
-            headerRow.createCell(6).setCellValue("Total Candidatures");
-            
+            header(sheet, "ID", "Nom Entreprise", "Email", "Domaine d'Activité", "Site Web", "Total Offres", "Total Candidatures");
             int rowNum = 1;
             for (CompanyPartnersDTO dto : data) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(dto.getId());
-                row.createCell(1).setCellValue(dto.getFullName());
+                row.createCell(1).setCellValue(str(dto.getFullName()));
                 row.createCell(2).setCellValue(dto.getEmail());
-                row.createCell(3).setCellValue(dto.getDomaineActivite() != null ? dto.getDomaineActivite() : "");
-                row.createCell(4).setCellValue(dto.getSiteWeb() != null ? dto.getSiteWeb() : "");
-                row.createCell(5).setCellValue(dto.getTotalOffres());
-                row.createCell(6).setCellValue(dto.getTotalCandidatures());
+                row.createCell(3).setCellValue(str(dto.getDomaineActivite()));
+                row.createCell(4).setCellValue(str(dto.getSiteWeb()));
+                row.createCell(5).setCellValue(nz(dto.getTotalOffres()));
+                row.createCell(6).setCellValue(nz(dto.getTotalCandidatures()));
             }
-            
-            workbook.write(out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
-        }
+        });
     }
 
+    /** Toutes les conventions créées pendant l'année (auparavant : uniquement celles créées le 1er janvier). */
     @Override
-    public byte[] exportStagesByYear(LocalDate year) {
-        List<ConventionStage> conventions = conventionRepository.findByDateCreation(year);
-        
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+    public byte[] exportStagesByYear(int year) {
+        List<ConventionStage> conventions = conventionRepository.findByDateCreationBetween(
+                LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31));
+        return buildWorkbook(workbook -> {
             Sheet sheet = workbook.createSheet("Stages " + year);
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Étudiant");
-            headerRow.createCell(1).setCellValue("Entreprise");
-            headerRow.createCell(2).setCellValue("Titre Stage");
-            headerRow.createCell(3).setCellValue("Date Début");
-            headerRow.createCell(4).setCellValue("Date Fin");
-            headerRow.createCell(5).setCellValue("Statut");
-            
+            header(sheet, "Étudiant", "Entreprise", "Titre Stage", "Date Début", "Date Fin", "Statut");
             int rowNum = 1;
             for (ConventionStage convention : conventions) {
                 Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(convention.getCandidature().getEtudiant().getFullName());
-                row.createCell(1).setCellValue(convention.getCandidature().getOffreStage().getEntreprise().getFullName());
-                row.createCell(2).setCellValue(convention.getCandidature().getOffreStage().getIntitule());
-                row.createCell(3).setCellValue(convention.getDateDebut() != null ? convention.getDateDebut().toString() : "");
-                row.createCell(4).setCellValue(convention.getDateFin() != null ? convention.getDateFin().toString() : "");
-                row.createCell(5).setCellValue(convention.getStatutConvention().toString());
+                row.createCell(0).setCellValue(str(convention.getCandidature().getEtudiant().getFullName()));
+                row.createCell(1).setCellValue(str(convention.getCandidature().getOffreStage().getEntreprise().getFullName()));
+                row.createCell(2).setCellValue(str(convention.getCandidature().getOffreStage().getIntitule()));
+                row.createCell(3).setCellValue(str(convention.getDateDebut()));
+                row.createCell(4).setCellValue(str(convention.getDateFin()));
+                row.createCell(5).setCellValue(str(convention.getStatutConvention()));
             }
-            
-            workbook.write(out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
-        }
+        });
     }
 
     @Override
     public byte[] exportSignedConventions() {
         List<ConventionStage> conventions = conventionRepository.findByStatutConvention(StatutConvention.APPROUVE);
-        
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        return buildWorkbook(workbook -> {
             Sheet sheet = workbook.createSheet("Conventions Signées");
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("Étudiant");
-            headerRow.createCell(1).setCellValue("Entreprise");
-            headerRow.createCell(2).setCellValue("Titre Stage");
-            headerRow.createCell(3).setCellValue("Date Signature");
-            headerRow.createCell(4).setCellValue("Enseignant Valideur");
-            
+            header(sheet, "Étudiant", "Entreprise", "Titre Stage", "Date Signature", "Enseignant Valideur");
             int rowNum = 1;
             for (ConventionStage convention : conventions) {
                 Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(convention.getCandidature().getEtudiant().getFullName());
-                row.createCell(1).setCellValue(convention.getCandidature().getOffreStage().getEntreprise().getFullName());
-                row.createCell(2).setCellValue("Convetion de stage "+convention.getCandidature().getOffreStage().getIntitule() );
-                row.createCell(3).setCellValue(convention.getDateAprouval() != null ? convention.getDateAprouval().toString() : "");
-                row.createCell(4).setCellValue(convention.getEnseignantValideur() != null ? convention.getEnseignantValideur().getFullName() : "");
+                row.createCell(0).setCellValue(str(convention.getCandidature().getEtudiant().getFullName()));
+                row.createCell(1).setCellValue(str(convention.getCandidature().getOffreStage().getEntreprise().getFullName()));
+                row.createCell(2).setCellValue("Convention de stage " + str(convention.getCandidature().getOffreStage().getIntitule()));
+                row.createCell(3).setCellValue(str(convention.getDateAprouval()));
+                row.createCell(4).setCellValue(convention.getEnseignantValideur() != null ? str(convention.getEnseignantValideur().getFullName()) : "");
             }
-            
-            workbook.write(out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
-        }
+        });
     }
 
     @Override
     public byte[] exportAllUsers() {
         List<Utilisateur> users = utilisateurRepository.findAll();
-        
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        return buildWorkbook(workbook -> {
             Sheet sheet = workbook.createSheet("Tous les Utilisateurs");
-            
-            Row headerRow = sheet.createRow(0);
-            headerRow.createCell(0).setCellValue("ID");
-            headerRow.createCell(1).setCellValue("Nom Complet");
-            headerRow.createCell(2).setCellValue("Email");
-            headerRow.createCell(3).setCellValue("Rôle");
-            headerRow.createCell(4).setCellValue("Date Création");
-            headerRow.createCell(5).setCellValue("Statut");
-            
+            header(sheet, "ID", "Nom Complet", "Email", "Rôle", "Date Création", "Statut");
             int rowNum = 1;
             for (Utilisateur user : users) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(user.getId());
-                row.createCell(1).setCellValue(user.getFullName());
+                row.createCell(1).setCellValue(str(user.getFullName()));
                 row.createCell(2).setCellValue(user.getEmail());
-                row.createCell(3).setCellValue(user.getRole().toString());
-                row.createCell(4).setCellValue(user.getCreateAt() != null ? user.getCreateAt().toString() : "");
-                row.createCell(5).setCellValue(user.getStatus() != null ? user.getStatus().toString() : "");
+                row.createCell(3).setCellValue(str(user.getRole()));
+                row.createCell(4).setCellValue(str(user.getCreateAt()));
+                row.createCell(5).setCellValue(str(user.getStatus()));
             }
-            
-            workbook.write(out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
-        }
+        });
     }
 
     @Override
     public byte[] exportAllData() {
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            
-            // Feuille Utilisateurs
+        List<Utilisateur> users = utilisateurRepository.findAll();
+        List<ConventionStage> conventions = conventionRepository.findAll();
+        return buildWorkbook(workbook -> {
             Sheet usersSheet = workbook.createSheet("Utilisateurs");
-            List<Utilisateur> users = utilisateurRepository.findAll();
-            Row userHeader = usersSheet.createRow(0);
-            userHeader.createCell(0).setCellValue("ID");
-            userHeader.createCell(1).setCellValue("Nom");
-            userHeader.createCell(2).setCellValue("Email");
-            userHeader.createCell(3).setCellValue("Rôle");
-            
+            header(usersSheet, "ID", "Nom", "Email", "Rôle");
             int userRowNum = 1;
             for (Utilisateur user : users) {
                 Row row = usersSheet.createRow(userRowNum++);
                 row.createCell(0).setCellValue(user.getId());
-                row.createCell(1).setCellValue(user.getFullName());
+                row.createCell(1).setCellValue(str(user.getFullName()));
                 row.createCell(2).setCellValue(user.getEmail());
-                row.createCell(3).setCellValue(user.getRole().toString());
+                row.createCell(3).setCellValue(str(user.getRole()));
             }
-            
-            // Feuille Conventions
+
             Sheet conventionsSheet = workbook.createSheet("Conventions");
-            List<ConventionStage> conventions = conventionRepository.findAll();
-            Row convHeader = conventionsSheet.createRow(0);
-            convHeader.createCell(0).setCellValue("Étudiant");
-            convHeader.createCell(1).setCellValue("Entreprise");
-            convHeader.createCell(2).setCellValue("Statut");
-            
+            header(conventionsSheet, "Étudiant", "Entreprise", "Statut");
             int convRowNum = 1;
             for (ConventionStage convention : conventions) {
                 Row row = conventionsSheet.createRow(convRowNum++);
-                row.createCell(0).setCellValue(convention.getCandidature().getEtudiant().getFullName());
-                row.createCell(1).setCellValue(convention.getCandidature().getOffreStage().getEntreprise().getFullName());
-                row.createCell(2).setCellValue(convention.getStatutConvention().toString());
+                row.createCell(0).setCellValue(str(convention.getCandidature().getEtudiant().getFullName()));
+                row.createCell(1).setCellValue(str(convention.getCandidature().getOffreStage().getEntreprise().getFullName()));
+                row.createCell(2).setCellValue(str(convention.getStatutConvention()));
             }
-            
+        });
+    }
+
+    private static byte[] buildWorkbook(Consumer<Workbook> content) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            content.accept(workbook);
             workbook.write(out);
             return out.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel", e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Erreur lors de la génération du fichier Excel", e);
         }
+    }
+
+    private static void header(Sheet sheet, String... titles) {
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < titles.length; i++) {
+            headerRow.createCell(i).setCellValue(titles[i]);
+        }
+    }
+
+    private static String str(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private static double nz(Long value) {
+        return value == null ? 0 : value;
     }
 }

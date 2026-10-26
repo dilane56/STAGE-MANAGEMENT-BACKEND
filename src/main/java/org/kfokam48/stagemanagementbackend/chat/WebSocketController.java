@@ -1,33 +1,39 @@
 package org.kfokam48.stagemanagementbackend.chat;
 
 import lombok.RequiredArgsConstructor;
-
 import org.kfokam48.stagemanagementbackend.chat.message.MessageDTO;
 import org.kfokam48.stagemanagementbackend.chat.message.MessageResponseDTO;
-import org.kfokam48.stagemanagementbackend.controlleur.notification.NotificationController;
-import org.kfokam48.stagemanagementbackend.enums.UserStatus;
-import org.kfokam48.stagemanagementbackend.model.Utilisateur;
-import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
+import org.kfokam48.stagemanagementbackend.service.notification.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.time.Instant;
+import java.security.Principal;
+
 
 @Controller
 @RequiredArgsConstructor
 public class WebSocketController {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketController.class);
+
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
-    private final UtilisateurRepository utilisateurRepository;
-    private final NotificationController notificationController;
+    private final NotificationService notificationService;
 
     @MessageMapping("/chat.send")
-    public void sendMessage(@Payload MessageDTO chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+    public void sendMessage(@Payload MessageDTO chatMessage, Principal principal) {
+        if (principal == null) {
+            return;
+        }
+        String senderId = principal.getName();
         try {
+            // L'expéditeur est toujours l'utilisateur authentifié : on ignore la valeur envoyée par le client
+            chatMessage.setExpediteurId(Long.parseLong(senderId));
+
             Message savedMessage = chatService.sendMessages(chatMessage);
             MessageResponseDTO messageResponse = chatService.convertToResponseDTO(savedMessage);
 
@@ -37,45 +43,25 @@ public class WebSocketController {
                     "/queue/messages",
                     messageResponse
             );
-            notificationController.sendNotification(savedMessage.getDestinataire().getId(), "Nouveau message", "Vous avez un nouveau message de " + savedMessage.getExpediteur().getFullName(),false);
+            notificationService.sendNotification(savedMessage.getDestinataire().getId(), "Nouveau message",
+                    "Vous avez un nouveau message de " + savedMessage.getExpediteur().getFullName(), false);
 
             // Envoi à l'expéditeur pour confirmation
-            messagingTemplate.convertAndSendToUser(
-                    chatMessage.getExpediteurId().toString(),
-                    "/queue/messages",
-                    messageResponse
-            );
+            messagingTemplate.convertAndSendToUser(senderId, "/queue/messages", messageResponse);
 
         } catch (Exception e) {
-            messagingTemplate.convertAndSendToUser(
-                    chatMessage.getExpediteurId().toString(),
-                    "/queue/errors",
-                    "Erreur lors de l'envoi du message: " + e.getMessage()
-            );
+            logger.warn("Échec de l'envoi d'un message de chat : {}", e.getMessage());
+            messagingTemplate.convertAndSendToUser(senderId, "/queue/errors",
+                    "Erreur lors de l'envoi du message: " + e.getMessage());
         }
     }
 
+    /**
+     * Conservé pour compatibilité avec les anciens clients : le statut EN_LIGNE est désormais
+     * positionné automatiquement à la connexion (WebSocketEventListener).
+     */
     @MessageMapping("/chat.join")
-    public void addUser(@Payload String userId, SimpMessageHeaderAccessor headerAccessor) {
-        headerAccessor.getSessionAttributes().put("user_id", userId);
-
-        try {
-            Long userIdLong = Long.parseLong(userId);
-            Utilisateur user = utilisateurRepository.findById(userIdLong).orElse(null);
-
-            if (user != null) {
-                user.setStatus(UserStatus.EN_LIGNE);
-                user.setDerniereConnexion(Instant.now());
-                utilisateurRepository.save(user);
-
-                // Notifier tous les utilisateurs du changement de statut
-               notificationController.sendNotification(user.getId(), "Statut mis à jour", "Votre statut a été mis à jour à EN_LIGNE", false);
-                // Utilisation de DTO pour un formatage plus propre et plus sûr
-                messagingTemplate.convertAndSend("/topic/status",
-                        String.format("{\"userId\": %d, \"status\": \"EN_LIGNE\"}", user.getId()));
-            }
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la mise à jour du statut utilisateur: " + e.getMessage());
-        }
+    public void addUser(Principal principal) {
+        logger.debug("chat.join reçu de l'utilisateur {}", principal != null ? principal.getName() : "anonyme");
     }
 }

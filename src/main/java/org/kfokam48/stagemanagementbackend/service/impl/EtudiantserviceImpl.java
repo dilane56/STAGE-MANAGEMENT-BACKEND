@@ -2,7 +2,6 @@ package org.kfokam48.stagemanagementbackend.service.impl;
 
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantDTO;
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantResponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantUpdateDTO;
 import org.kfokam48.stagemanagementbackend.enums.Roles;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.EtudiantMapper;
@@ -11,51 +10,37 @@ import org.kfokam48.stagemanagementbackend.model.Etudiant;
 import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
 import org.kfokam48.stagemanagementbackend.repository.EnseignantRepository;
 import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;
-import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.Etudiantservice;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
+
+import static org.kfokam48.stagemanagementbackend.service.impl.UserAccountHelper.keepIfNull;
 
 @Service
 @Transactional
 public class EtudiantserviceImpl implements Etudiantservice {
     private final EtudiantRepository etudiantRepository;
     private final EtudiantMapper etudiantMapper;
-    private final UtilisateurRepository utilisateurRepository;
     private final EnseignantRepository enseignantRepository;
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final UserAccountHelper userAccountHelper;
 
-    public EtudiantserviceImpl(EtudiantRepository etudiantRepository, EtudiantMapper etudiantMapper, UtilisateurRepository utilisateurRepository, EnseignantRepository enseignantRepository) {
+    public EtudiantserviceImpl(EtudiantRepository etudiantRepository, EtudiantMapper etudiantMapper,
+                               EnseignantRepository enseignantRepository, UserAccountHelper userAccountHelper) {
         this.etudiantRepository = etudiantRepository;
         this.etudiantMapper = etudiantMapper;
-        this.utilisateurRepository = utilisateurRepository;
         this.enseignantRepository = enseignantRepository;
+        this.userAccountHelper = userAccountHelper;
     }
 
     @Override
     public EtudiantResponseDTO createEtudiant(EtudiantDTO etudiantDTO) {
-        if (utilisateurRepository.existsByEmail(etudiantDTO.getEmail())) {
-            throw new RuntimeException("User already exists with this email");
-        }
         Etudiant etudiant = etudiantMapper.etudiantDtoToEtudiant(etudiantDTO);
+        userAccountHelper.prepareNewAccount(etudiant, etudiantDTO);
         etudiant.setRole(Roles.ETUDIANT);
-        etudiant.setPassword(passwordEncoder().encode(etudiantDTO.getPassword()));
-        
-        // Remplir le Profile avec les informations spécifiques à l'étudiant
-        Profile profile = new Profile();
-        profile.setFiliere(etudiant.getFiliere());
-        profile.setAnneeScolaire(etudiant.getAnneeScolaire());
-        profile.setNiveau(etudiant.getNiveau());
-        profile.setUniversite(etudiant.getUniversite());
-        etudiant.setProfile(profile);
-        etudiant.setCreateAt(LocalDate.now());
+        syncProfile(etudiant);
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiantRepository.save(etudiant));
     }
 
@@ -75,7 +60,7 @@ public class EtudiantserviceImpl implements Etudiantservice {
     public List<EtudiantResponseDTO> getEtudiantsByEnseignant(Long enseignantId) {
         Enseignant enseignant = enseignantRepository.findById(enseignantId)
                 .orElseThrow(() -> new RessourceNotFoundException("Enseignant introuvable avec l'ID: " + enseignantId));
-        
+
         List<Etudiant> etudiants = etudiantRepository.findByFiliere(enseignant.getFiliere());
         return etudiantMapper.etudiantsToEtudiantResponseDTOs(etudiants);
     }
@@ -84,30 +69,14 @@ public class EtudiantserviceImpl implements Etudiantservice {
     public EtudiantResponseDTO updateEtudiant(Long id, EtudiantDTO etudiantDTO) {
         Etudiant etudiant = etudiantRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Etudiant not found"));
-        if (etudiantDTO.getEmail() != null && !etudiantDTO.getEmail().equals(etudiant.getEmail())) {
-            if (utilisateurRepository.existsByEmail(etudiantDTO.getEmail())) {
-                throw new RessourceNotFoundException("User already exists with this email");
-            }
-        }
-        etudiant.setRole(Roles.ETUDIANT);
-        etudiant.setEmail(etudiantDTO.getEmail());
-        etudiant.setFullName(etudiantDTO.getFullName());
-        etudiant.setTelephone(etudiantDTO.getTelephone());
-        etudiant.setAvatar(etudiantDTO.getAvatar());
-        etudiant.setAnneeScolaire(etudiantDTO.getAnneeScolaire());
-        etudiant.setFiliere(etudiantDTO.getFiliere());
-        etudiant.setNiveau(etudiantDTO.getNiveau());
-        etudiant.setUniversite(etudiantDTO.getUniversite());
-        etudiant.setPassword(passwordEncoder().encode(etudiantDTO.getPassword()));
-        etudiant.setUpdateAt(LocalDate.now());
-        
-        // Mettre à jour le Profile
-        Profile profile = etudiant.getProfile() != null ? etudiant.getProfile() : new Profile();
-        profile.setFiliere(etudiant.getFiliere());
-        profile.setAnneeScolaire(etudiant.getAnneeScolaire());
-        profile.setNiveau(etudiant.getNiveau());
-        profile.setUniversite(etudiant.getUniversite());
-        etudiant.setProfile(profile);
+
+        userAccountHelper.applyCommonUpdates(etudiant, etudiantDTO);
+        etudiant.setAnneeScolaire(keepIfNull(etudiantDTO.getAnneeScolaire(), etudiant.getAnneeScolaire()));
+        etudiant.setFiliere(keepIfNull(etudiantDTO.getFiliere(), etudiant.getFiliere()));
+        etudiant.setNiveau(keepIfNull(etudiantDTO.getNiveau(), etudiant.getNiveau()));
+        etudiant.setUniversite(keepIfNull(etudiantDTO.getUniversite(), etudiant.getUniversite()));
+        syncProfile(etudiant);
+
         etudiantRepository.save(etudiant);
         return etudiantMapper.etudiantToEtudiantResponseDTO(etudiant);
     }
@@ -118,5 +87,15 @@ public class EtudiantserviceImpl implements Etudiantservice {
                 .orElseThrow(() -> new RessourceNotFoundException("Etudiant not found"));
         etudiantRepository.delete(etudiant);
         return ResponseEntity.ok("Etudiant deleted successfully");
+    }
+
+    /** Recopie les champs spécifiques dans le profil embarqué lu par le frontend. */
+    private void syncProfile(Etudiant etudiant) {
+        Profile profile = etudiant.getProfile() != null ? etudiant.getProfile() : new Profile();
+        profile.setFiliere(etudiant.getFiliere());
+        profile.setAnneeScolaire(etudiant.getAnneeScolaire());
+        profile.setNiveau(etudiant.getNiveau());
+        profile.setUniversite(etudiant.getUniversite());
+        etudiant.setProfile(profile);
     }
 }

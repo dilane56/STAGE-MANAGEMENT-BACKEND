@@ -8,4 +8,7 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     List<Notification> findByDestinataireIdOrderByDateEnvoiDesc(Long destinataireId);
+
+    // Comptage en base plutôt que chargement de toutes les notifications en mémoire
+    long countByDestinataireIdAndLuFalse(Long destinataireId);
 }

@@ -17,6 +17,7 @@ public interface UtilisateurService {
     List<Contact> findAllContacts();
     List<Contact> findAllEntrepriseContacts(Long entrepriseId);
     List<Contact>findAllCandidatContact(Long etudaiantId);
+    List<Contact> findAllEnseignantContacts(Long enseignantId);
 
 
 }

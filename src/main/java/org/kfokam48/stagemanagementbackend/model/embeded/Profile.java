@@ -14,4 +14,7 @@ public class Profile {
     private String siteWeb;
     private String description;
     private String dateCreation;
+    // Champs propres aux enseignants (auparavant absents du profil, donc perdus côté frontend)
+    private String grade;
+    private String departement;
 }

@@ -18,12 +18,12 @@ public interface ConventionStageRepository extends JpaRepository<ConventionStage
     boolean existsByCandidatureId(Long candidatureId);
     List<ConventionStage> findByCandidatureOffreStageEntrepriseId(Long entrepriseId);
     List<ConventionStage> findByCandidatureEtudiantFiliere(String filiere);
-    
+
     @Query("SELECT COUNT(DISTINCT c.candidature.etudiant.id) FROM ConventionStage c WHERE c.enseignantValideur.id = :enseignantId")
     Long countDistinctStudentsByEnseignantId(Long enseignantId);
 
 
     Long countConventionStageByCandidature_Etudiant_FiliereAndStatutConvention(String candidatureEtudiantFiliere, StatutConvention statutConvention);
-    List<ConventionStage> findByDateCreation(LocalDate year);
+    List<ConventionStage> findByDateCreationBetween(LocalDate start, LocalDate end);
     List<ConventionStage> findByStatutConvention(StatutConvention statut);
 }

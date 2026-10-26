@@ -2,37 +2,33 @@ package org.kfokam48.stagemanagementbackend.service.impl;
 
 import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseDTO;
 import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseReponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseUpdateDTO;
 import org.kfokam48.stagemanagementbackend.enums.Roles;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.EntrepriseMapper;
 import org.kfokam48.stagemanagementbackend.model.Entreprise;
 import org.kfokam48.stagemanagementbackend.model.embeded.Profile;
 import org.kfokam48.stagemanagementbackend.repository.EntrepriseRepository;
-import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.EntrepriseService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
+
+import static org.kfokam48.stagemanagementbackend.service.impl.UserAccountHelper.keepIfNull;
 
 @Service
 @Transactional
 public class EntrepriseServiceImpl implements EntrepriseService {
     private final EntrepriseRepository entrepriseRepository;
     private final EntrepriseMapper entrepriseMapper;
-    private final UtilisateurRepository utilisateurRepository;
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final UserAccountHelper userAccountHelper;
 
-    public EntrepriseServiceImpl(EntrepriseRepository entrepriseRepository, EntrepriseMapper entrepriseMapper, UtilisateurRepository utilisateurRepository) {
+    public EntrepriseServiceImpl(EntrepriseRepository entrepriseRepository, EntrepriseMapper entrepriseMapper,
+                                 UserAccountHelper userAccountHelper) {
         this.entrepriseRepository = entrepriseRepository;
         this.entrepriseMapper = entrepriseMapper;
-        this.utilisateurRepository = utilisateurRepository;
+        this.userAccountHelper = userAccountHelper;
     }
 
     @Override
@@ -45,22 +41,10 @@ public class EntrepriseServiceImpl implements EntrepriseService {
 
     @Override
     public EntrepriseReponseDTO creerEntreprise(EntrepriseDTO entrepriseDTO) {
-        if (utilisateurRepository.existsByEmail(entrepriseDTO.getEmail())) {
-            throw new RuntimeException("User already exists with this email");
-        }
         Entreprise entreprise = entrepriseMapper.entrepriseDTOToEntreprise(entrepriseDTO);
+        userAccountHelper.prepareNewAccount(entreprise, entrepriseDTO);
         entreprise.setRole(Roles.ENTREPRISE);
-        entreprise.setPassword(passwordEncoder().encode(entrepriseDTO.getPassword()));
-        
-        // Remplir le Profile avec les informations spécifiques à l'entreprise
-        Profile profile = new Profile();
-        profile.setDomaineActivite(entreprise.getDomaineActivite());
-        profile.setSiteWeb(entreprise.getSiteWeb());
-        profile.setDescription(entreprise.getDescription());
-        if (entreprise.getDateCreation() != null) {
-            profile.setDateCreation(entreprise.getDateCreation().toString());
-        }
-        entreprise.setProfile(profile);
+        syncProfile(entreprise);
         return entrepriseMapper.entrepriseToEntrepriseReponseDTO(entrepriseRepository.save(entreprise));
     }
 
@@ -68,33 +52,14 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     public EntrepriseReponseDTO modifierEntreprise(Long id, EntrepriseDTO entrepriseDTO) {
         Entreprise entreprise = entrepriseRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Entreprise not found"));
-        if (entrepriseDTO.getEmail() != null && !entrepriseDTO.getEmail().equals(entreprise.getEmail())) {
-            if (utilisateurRepository.existsByEmail(entrepriseDTO.getEmail())) {
-                throw new RuntimeException("User already exists with this email");
-            }
-        }
-        entreprise.setDomaineActivite(entrepriseDTO.getDomaineActivite());
-        entreprise.setSiteWeb(entrepriseDTO.getSiteWeb());
-        entreprise.setDescription(entrepriseDTO.getDescription());
-        entreprise.setDateCreation(entrepriseDTO.getDateCreation());
-        entreprise.setEmail(entrepriseDTO.getEmail());
-        entreprise.setFullName(entrepriseDTO.getFullName());
-        entreprise.setTelephone(entrepriseDTO.getTelephone());
-        entreprise.setAvatar(entrepriseDTO.getAvatar());
-        entreprise.setPassword(passwordEncoder().encode(entrepriseDTO.getPassword()));
-        entreprise.setRole(Roles.ENTREPRISE);
-        entreprise.setUpdateAt(LocalDate.now());
-        
-        // Mettre à jour le Profile
-        Profile profile = entreprise.getProfile() != null ? entreprise.getProfile() : new Profile();
-        profile.setDomaineActivite(entreprise.getDomaineActivite());
-        profile.setSiteWeb(entreprise.getSiteWeb());
-        profile.setDescription(entreprise.getDescription());
-        if (entreprise.getDateCreation() != null) {
-            profile.setDateCreation(entreprise.getDateCreation().toString());
-        }
-        entreprise.setProfile(profile);
-        
+
+        userAccountHelper.applyCommonUpdates(entreprise, entrepriseDTO);
+        entreprise.setDomaineActivite(keepIfNull(entrepriseDTO.getDomaineActivite(), entreprise.getDomaineActivite()));
+        entreprise.setSiteWeb(keepIfNull(entrepriseDTO.getSiteWeb(), entreprise.getSiteWeb()));
+        entreprise.setDescription(keepIfNull(entrepriseDTO.getDescription(), entreprise.getDescription()));
+        entreprise.setDateCreation(keepIfNull(entrepriseDTO.getDateCreation(), entreprise.getDateCreation()));
+        syncProfile(entreprise);
+
         entrepriseRepository.save(entreprise);
         return entrepriseMapper.entrepriseToEntrepriseReponseDTO(entreprise);
     }
@@ -110,5 +75,14 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     @Override
     public List<EntrepriseReponseDTO> getAllEntreprises() {
         return entrepriseMapper.entreprisesToEntreprisesReponseDTO(entrepriseRepository.findAll());
+    }
+
+    private void syncProfile(Entreprise entreprise) {
+        Profile profile = entreprise.getProfile() != null ? entreprise.getProfile() : new Profile();
+        profile.setDomaineActivite(entreprise.getDomaineActivite());
+        profile.setSiteWeb(entreprise.getSiteWeb());
+        profile.setDescription(entreprise.getDescription());
+        profile.setDateCreation(entreprise.getDateCreation() != null ? entreprise.getDateCreation().toString() : null);
+        entreprise.setProfile(profile);
     }
 }

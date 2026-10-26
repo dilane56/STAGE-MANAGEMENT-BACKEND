@@ -1,7 +1,6 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 import org.kfokam48.stagemanagementbackend.dto.enseigant.EnseignantDTO;
 import org.kfokam48.stagemanagementbackend.dto.enseigant.EnseignantResponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.enseigant.EnseignantUpdateDTO;
 import org.kfokam48.stagemanagementbackend.service.impl.EnseignantServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,9 +19,9 @@ public class EnseignantController {
     }
 
 
-    // ✅ Récupérer un enseignant par ID
+    // ✅ Récupérer un enseignant par ID (l'enseignant lui-même ou un admin)
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')") // Accès pour les rôles ADMIN
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ENSEIGNANT') and #id == authentication.principal.id)")
     public ResponseEntity<EnseignantResponseDTO> getEnseignantById(@PathVariable Long id) {
         EnseignantResponseDTO enseignant = enseignantService.getEnseignantById(id);
         return ResponseEntity.ok(enseignant);
@@ -36,9 +35,9 @@ public class EnseignantController {
         return ResponseEntity.ok(enseignant);
     }
 
-    // ✅ Mettre à jour un enseignant
+    // ✅ Mettre à jour un enseignant (l'enseignant lui-même ou un admin)
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ENSEIGNANT') and #id == authentication.principal.id)")
     public ResponseEntity<EnseignantResponseDTO> updateEnseignant(
             @PathVariable Long id,
             @RequestBody EnseignantDTO enseignantUpdateDTO) {

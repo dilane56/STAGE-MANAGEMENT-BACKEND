@@ -3,73 +3,63 @@ package org.kfokam48.stagemanagementbackend.config;
 import lombok.RequiredArgsConstructor;
 
 import org.kfokam48.stagemanagementbackend.enums.UserStatus;
-import org.kfokam48.stagemanagementbackend.model.Utilisateur;
 import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.AbstractSubProtocolEvent;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-
+import java.security.Principal;
 import java.time.Instant;
+import java.util.Map;
 
 
+/**
+ * Met à jour le statut EN_LIGNE / HORS_LIGNE des utilisateurs à partir du Principal
+ * de la session WebSocket (positionné par WebSocketAuthInterceptor).
+ */
 @Component
 @RequiredArgsConstructor
 public class WebSocketEventListener {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketEventListener.class);
+
     private final SimpMessageSendingOperations messagingTemplate;
     private final UtilisateurRepository utilisateurRepository;
 
-    // Dans votre classe WebSocketEventListener.java
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-
-        // Vérifier si les attributs de session ne sont pas null
-        if (headerAccessor.getSessionAttributes() != null) {
-            String userIdStr = (String) headerAccessor.getSessionAttributes().get("user_id");
-
-            if (userIdStr != null) {
-                try {
-                    Long userId = Long.parseLong(userIdStr);
-                    Utilisateur user = utilisateurRepository.findById(userId).orElse(null);
-                    if (user != null && user.getStatus() != UserStatus.EN_LIGNE) {
-                        user.setStatus(UserStatus.EN_LIGNE);
-                        utilisateurRepository.save(user);
-
-                        messagingTemplate.convertAndSend("/topic/status",
-                                String.format("{\"userId\": %d, \"status\": \"EN_LIGNE\"}", user.getId()));
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("ID utilisateur non valide lors de la connexion WebSocket.");
-                }
-            }
-        }
+        updateStatus(event, UserStatus.EN_LIGNE);
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String userIdStr = (String) headerAccessor.getSessionAttributes().get("user_id");
+        updateStatus(event, UserStatus.HORS_LIGNE);
+    }
 
-        if (userIdStr != null) {
-            try {
-                Long userId = Long.parseLong(userIdStr);
-                Utilisateur user = utilisateurRepository.findById(userId).orElse(null);
-                if (user != null) {
-                    user.setStatus(UserStatus.HORS_LIGNE);
-                    utilisateurRepository.save(user);
-
-                    messagingTemplate.convertAndSend("/topic/status",
-                            String.format("{\"userId\": %d, \"status\": \"HORS_LIGNE\", \"derniereConnexion\": \"%s\"}",
-                                    user.getId(), Instant.now().toString()));
-                }
-            } catch (NumberFormatException e) {
-                System.err.println("ID utilisateur non valide lors de la déconnexion WebSocket.");
-            }
+    private void updateStatus(AbstractSubProtocolEvent event, UserStatus status) {
+        Principal principal = event.getUser();
+        if (principal == null) {
+            return;
+        }
+        try {
+            Long userId = Long.parseLong(principal.getName());
+            utilisateurRepository.findById(userId).ifPresent(user -> {
+                Instant now = Instant.now();
+                user.setStatus(status);
+                user.setDerniereConnexion(now);
+                utilisateurRepository.save(user);
+                messagingTemplate.convertAndSend("/topic/status", Map.of(
+                        "userId", user.getId(),
+                        "status", status.name(),
+                        "derniereConnexion", now.toString()));
+            });
+        } catch (NumberFormatException e) {
+            logger.warn("Principal WebSocket inattendu : {}", principal.getName());
         }
     }
 }

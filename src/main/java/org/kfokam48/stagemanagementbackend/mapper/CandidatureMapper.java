@@ -4,10 +4,10 @@ import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureDTO;
 import org.kfokam48.stagemanagementbackend.dto.candidature.CandidatureResponseDTO;
 import org.kfokam48.stagemanagementbackend.dto.candidature.OffreStageInCandidatureDTO;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
+import org.kfokam48.stagemanagementbackend.minio.MinIOService;
 import org.kfokam48.stagemanagementbackend.model.Candidature;
 import org.kfokam48.stagemanagementbackend.repository.EtudiantRepository;
 import org.kfokam48.stagemanagementbackend.repository.OffreStageRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -15,14 +15,14 @@ import java.util.List;
 
 @Component
 public class CandidatureMapper {
-    private final ModelMapper modelMapper;
     private final OffreStageRepository offreStageRepository;
     private final EtudiantRepository etudiantRepository;
+    private final MinIOService minIOService;
 
-    public CandidatureMapper(ModelMapper modelMapper, OffreStageRepository offreStageRepository, EtudiantRepository etudiantRepository) {
-        this.modelMapper = modelMapper;
+    public CandidatureMapper(OffreStageRepository offreStageRepository, EtudiantRepository etudiantRepository, MinIOService minIOService) {
         this.offreStageRepository = offreStageRepository;
         this.etudiantRepository = etudiantRepository;
+        this.minIOService = minIOService;
     }
 
     public Candidature candidatureDTOToCandidature(CandidatureDTO candidatureDTO){
@@ -45,7 +45,8 @@ public class CandidatureMapper {
         candidatureResponseDTO.setDateReponse(candidature.getDateReponse());
         candidatureResponseDTO.setMessageReponse(candidature.getMessageReponse());
         candidatureResponseDTO.setOffreStage(offreStageToOffreStageInCandidatureDTO(candidature));
-        candidatureResponseDTO.setCheminFichier(candidature.getCvPath());
+        // URL pré-signée régénérée à chaque lecture (l'ancienne URL stockée expirait au bout de 7 jours)
+        candidatureResponseDTO.setCheminFichier(minIOService.getPresignedUrl(candidature.getCvPath()));
         candidatureResponseDTO.setEtudiantId(candidature.getEtudiant().getId());
         return candidatureResponseDTO;
 
@@ -63,7 +64,8 @@ public class CandidatureMapper {
         offreStageInCandidatureDTO.setIntitule(candidature.getOffreStage().getIntitule());
         offreStageInCandidatureDTO.setDureeStage(candidature.getOffreStage().getDureeStage());
         offreStageInCandidatureDTO.setNomEntreprise(candidature.getOffreStage().getEntreprise().getFullName());
-        offreStageInCandidatureDTO.setSecteur(candidature.getOffreStage().getSecteur().getNomSecteur());
+        offreStageInCandidatureDTO.setSecteur(candidature.getOffreStage().getSecteur() != null
+                ? candidature.getOffreStage().getSecteur().getNomSecteur() : null);
         offreStageInCandidatureDTO.setLocalisation(candidature.getOffreStage().getLocalisation());
         return offreStageInCandidatureDTO;
     }

@@ -6,6 +6,7 @@ import org.kfokam48.stagemanagementbackend.dto.notification.NotificationResponse
 import org.kfokam48.stagemanagementbackend.service.mail.EmailService;
 import org.kfokam48.stagemanagementbackend.service.notification.NotificationService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,15 +29,19 @@ public class NotificationRestController {
         notificationService.markAsRead(id);
     }
 
+    /** Envoi d'email arbitraire : réservé aux administrateurs (évite un relais de spam). */
     @PostMapping("/send")
-    public ResponseEntity<String> sendEmail(MailDTO mailDTO) {
-       emailService.sendMail(mailDTO);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> sendEmail(@RequestBody MailDTO mailDTO) {
+        emailService.sendMail(mailDTO);
         return ResponseEntity.ok("mail envoyer avec succes");
     }
+
     @PutMapping("utilisateur/{userId}/lire-tout")
     public void markAllAsReadByUserId(@PathVariable Long userId) {
         notificationService.markAllAsReadByUserId(userId);
     }
+
     @GetMapping("utilisateur/{userId}/non-lues/count")
     public int getNumberOfNotReadNotificationByUserId(@PathVariable Long userId){
         return notificationService.getNumberOfNotReadNotificationByUserId(userId);

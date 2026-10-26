@@ -26,11 +26,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Utilisateur user = userRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("Utilisateur introuvable : " + username));
+        Utilisateur user = userRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("Utilisateur introuvable : " + username));
 
-
-
-        return new CustomUserDetails(user.getEmail(), user.getPassword(), getGrantedAuthorities(String.valueOf(user.getRole())));
+        return new CustomUserDetails(user.getId(), user.getRole(), user.getEmail(), user.getPassword(),
+                getGrantedAuthorities(String.valueOf(user.getRole())));
     }
 
     private List<GrantedAuthority> getGrantedAuthorities(String role) {

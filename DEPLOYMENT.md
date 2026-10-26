@@ -28,10 +28,10 @@
 
 ```
 SPRING_PROFILES_ACTIVE=prod
-JWT_SECRET=1Gmn7N06rjiLK02f0L+o1rj5IfI6z1UQUn6B+Hokt0Lrs2XhXbdcYIw/fyr5HcQGKpXLXe5oyXeDU5Sv/mgZ6w==
+JWT_SECRET=<votre-secret-jwt-base64>
 JWT_EXPIRATION=86400000
 MAIL_USERNAME=kamgaingfotso@gmail.com
-MAIL_PASSWORD=behg oeeu xwbj mdqq
+MAIL_PASSWORD=<votre-mot-de-passe-application-gmail>
 MINIO_URL=http://your-minio-url:9000
 MINIO_ACCESS_KEY=your-access-key
 MINIO_SECRET_KEY=your-secret-key
@@ -80,10 +80,10 @@ Remplissez les informations:
 ```
 DATABASE_URL=<URL PostgreSQL de Render>
 SPRING_PROFILES_ACTIVE=prod
-JWT_SECRET=1Gmn7N06rjiLK02f0L+o1rj5IfI6z1UQUn6B+Hokt0Lrs2XhXbdcYIw/fyr5HcQGKpXLXe5oyXeDU5Sv/mgZ6w==
+JWT_SECRET=<votre-secret-jwt-base64>
 JWT_EXPIRATION=86400000
 MAIL_USERNAME=kamgaingfotso@gmail.com
-MAIL_PASSWORD=behg oeeu xwbj mdqq
+MAIL_PASSWORD=<votre-mot-de-passe-application-gmail>
 MINIO_URL=http://your-minio-url:9000
 MINIO_ACCESS_KEY=your-access-key
 MINIO_SECRET_KEY=your-secret-key

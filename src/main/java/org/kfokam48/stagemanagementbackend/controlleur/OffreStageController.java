@@ -3,7 +3,6 @@ package org.kfokam48.stagemanagementbackend.controlleur;
 import org.kfokam48.stagemanagementbackend.dto.offreStage.CompetenceAddDTO;
 import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageDTO;
 import org.kfokam48.stagemanagementbackend.dto.offreStage.OffreStageResponseDTO;
-import org.kfokam48.stagemanagementbackend.model.OffreStage;
 import org.kfokam48.stagemanagementbackend.service.impl.OffreStageServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,6 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Les contrôles d'appartenance (une entreprise ne modifie que ses propres offres) sont faits
+ * dans OffreStageServiceImpl.
+ */
 @RestController
 @RequestMapping("/api/offres-stage") // URL de base du contrôleur
 public class OffreStageController {
@@ -24,7 +27,7 @@ public class OffreStageController {
 
     // ✅ Récupérer une offre de stage par ID
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT')")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT') or hasRole('ENSEIGNANT')")
     public ResponseEntity<OffreStageResponseDTO> getOffreStageById(@PathVariable Long id) {
         OffreStageResponseDTO offreStage = offreStageService.getOffreStageById(id);
         return ResponseEntity.ok(offreStage);
@@ -37,8 +40,9 @@ public class OffreStageController {
         OffreStageResponseDTO offreStage = offreStageService.createOffreStage(offreStageDTO);
         return ResponseEntity.ok(offreStage);
     }
+
     @GetMapping("/filtrer")
-    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT')")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') or hasRole('ETUDIANT') or hasRole('ENSEIGNANT')")
     public ResponseEntity<List<OffreStageResponseDTO>> filterOffresStage(
             @RequestParam(required = false) String localisation,
             @RequestParam(required = false) Integer duree,
@@ -84,7 +88,9 @@ public class OffreStageController {
         return ResponseEntity.ok(offres);
     }
 
+    // ✅ Ajouter une compétence (auparavant sans aucune restriction de rôle)
     @PostMapping("/{id}/competences")
+    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
     public ResponseEntity<OffreStageResponseDTO> addCompetence(@PathVariable Long id, @RequestBody CompetenceAddDTO dto) {
         OffreStageResponseDTO updated = offreStageService.addCompetence( dto.getNomCompetence(), id);
         return ResponseEntity.ok(updated);

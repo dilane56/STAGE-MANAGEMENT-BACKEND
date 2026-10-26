@@ -1,11 +1,7 @@
 package org.kfokam48.stagemanagementbackend.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
-import jakarta.annotation.PostConstruct;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,122 +9,109 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.kfokam48.stagemanagementbackend.service.auth.CustomUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 
+/**
+ * Authentifie la requête à partir :
+ * <ol>
+ *     <li>de l'en-tête "Authorization: Bearer ..." (Swagger, outils de test) ;</li>
+ *     <li>sinon du cookie HttpOnly "access_token" (application web).</li>
+ * </ol>
+ * Protection CSRF : une requête authentifiée par cookie qui modifie des données (POST, PUT, PATCH, DELETE)
+ * doit porter l'en-tête "X-Requested-With". Un site tiers ne peut pas ajouter cet en-tête sans
+ * autorisation CORS ; combiné à SameSite=Lax, cela empêche les requêtes forgées.
+ */
 @Component
 public class JwtRequestFillter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtRequestFillter.class);
 
-    @Value("${jwt.secret}")
-    private String jwtSecretString; // La clé secrète lue depuis la configuration
+    public static final String CSRF_HEADER = "X-Requested-With";
+    private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS", "TRACE");
+    private static final Set<String> PUBLIC_AUTH_PATHS = Set.of("/api/auth/login", "/api/auth/refresh", "/api/auth/logout");
 
-    private SecretKey signingKey; // Pour stocker la clé décodée une fois
-
+    private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final AuthCookieService authCookieService;
 
-    public JwtRequestFillter(CustomUserDetailsService userDetailsService) {
+    public JwtRequestFillter(JwtService jwtService, CustomUserDetailsService userDetailsService,
+                             AuthCookieService authCookieService) {
+        this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.authCookieService = authCookieService;
     }
 
-    // Initialisation de la clé au démarrage du filtre
-    @PostConstruct
-    private void init() {
-        try {
-            // Décoder la chaîne Base64 en bytes, puis créer la SecretKey
-            byte[] keyBytes = Decoders.BASE64.decode(jwtSecretString);
-            this.signingKey = Keys.hmacShaKeyFor(keyBytes);
-            logger.debug("Clé JWT chargée dans JwtRequestFilter. Longueur (octets) : {}", this.signingKey.getEncoded().length);
-        } catch (IllegalArgumentException e) {
-            logger.error("Erreur lors du décodage de la clé JWT. Assurez-vous que 'jwt.secret' est une chaîne Base64 valide.", e);
-            // Gérer l'erreur, par exemple en lançant une RuntimeException pour empêcher l'application de démarrer avec une clé invalide
-            throw new IllegalStateException("Impossible d'initialiser la clé JWT.", e);
-        }
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Endpoints publics d'authentification : aucun jeton à analyser
+        return PUBLIC_AUTH_PATHS.contains(request.getServletPath());
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authorizationHeader = request.getHeader("Authorization");
-        String jwt = null;
-        String userEmail = null;
-        String path = request.getRequestURI();
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            String authorizationHeader = request.getHeader("Authorization");
+            boolean fromCookie = false;
+            String jwt = null;
 
-        // Ignorer les endpoints publics (ex: /api/auth/login, /api/auth/register)
-        if (path.startsWith("/api/auth/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        try {
-            // Extraire le token s'il existe
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 jwt = authorizationHeader.substring(7);
-
-                // Utiliser la clé secrète initialisée dans ce filtre
-                Claims claims = Jwts.parser()
-                        .verifyWith(this.signingKey) // Utilisez la clé initialisée ici
-                        .build()
-                        .parseSignedClaims(jwt)
-                        .getPayload();
-
-                userEmail = claims.getSubject();
-                logger.debug("Token JWT décodé. Sujet : {}", userEmail);
+            } else {
+                Optional<String> cookie = authCookieService.read(request, AuthCookieService.ACCESS_COOKIE);
+                if (cookie.isPresent()) {
+                    jwt = cookie.get();
+                    fromCookie = true;
+                }
             }
 
-            // Authentifier si le token est valide et l'utilisateur n'est pas déjà authentifié
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            if (jwt != null) {
+                if (fromCookie && !SAFE_METHODS.contains(request.getMethod()) && request.getHeader(CSRF_HEADER) == null) {
+                    sendError(response, HttpServletResponse.SC_FORBIDDEN, "CSRF_HEADER_MISSING",
+                            "En-tête " + CSRF_HEADER + " requis.");
+                    return;
+                }
+                try {
+                    // Seuls les access tokens sont acceptés ici (un refresh token est rejeté)
+                    String userEmail = jwtService.validateAndGetSubject(jwt, JwtService.TYPE_ACCESS);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-                // Vérifier si le token est valide pour l'utilisateur (optionnel mais recommandé pour des validations plus poussées)
-                // Par exemple, vérifier si l'utilisateur est actif, etc.
-                // Pour l'instant, nous nous basons sur la validité de la signature et l'existence de l'utilisateur.
-
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                logger.debug("Utilisateur {} authentifié via JWT.", userEmail);
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                } catch (ExpiredJwtException e) {
+                    logger.debug("Token JWT expiré : {}", e.getMessage());
+                    sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "Token expiré.");
+                    return;
+                } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
+                    logger.warn("Token JWT invalide : {}", e.getMessage());
+                    sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_INVALID", "Token invalide.");
+                    return;
+                }
             }
-
-            // Laisser la requête continuer vers le prochain filtre de la chaîne
-            filterChain.doFilter(request, response);
-
-        } catch (SignatureException e) {
-            // Erreur spécifique si la signature du token est invalide
-            logger.warn("Signature JWT invalide : {}", e.getMessage());
-            sendUnauthorizedResponse(response, "Signature du token invalide.");
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            // Erreur spécifique si le token est expiré
-            logger.warn("Token JWT expiré : {}", e.getMessage());
-            sendUnauthorizedResponse(response, "Token expiré.");
-        } catch (io.jsonwebtoken.MalformedJwtException e) {
-            // Erreur spécifique si le token est malformé
-            logger.warn("Token JWT malformé : {}", e.getMessage());
-            sendUnauthorizedResponse(response, "Token malformé.");
-        } catch (Exception e) {
-            // Gérer toute autre exception inattendue
-            logger.error("Erreur lors du traitement du JWT : ", e);
-            sendUnauthorizedResponse(response, "Token invalide ou erreur interne.");
         }
+
+        filterChain.doFilter(request, response);
     }
 
-    private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+    private void sendError(HttpServletResponse response, int status, String code, String message) throws IOException {
         if (!response.isCommitted()) {
             response.resetBuffer();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"" + message + "\"}");
+            response.setStatus(status);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"status\":" + status + ",\"error\":\"" + code + "\",\"message\":\"" + message + "\"}");
         }
     }
 }

@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -82,8 +81,13 @@ public class ReportsController {
 
     @GetMapping("/stages/{year}/export")
     @PreAuthorize("hasRole('ADMIN') or hasRole('ENSEIGNANT')")
-    public ResponseEntity<ByteArrayResource> exportStagesByYear(@PathVariable LocalDate year) {
-        byte[] excelData = reportsService.exportStagesByYear(year);
+    public ResponseEntity<ByteArrayResource> exportStagesByYear(@PathVariable String year) {
+        // Accepte "2025" ou l'ancien format "2025-01-01" envoyé par le frontend
+        if (!year.matches("\\d{4}(-\\d{2}-\\d{2})?")) {
+            throw new IllegalArgumentException("Année invalide : " + year);
+        }
+        year = year.substring(0, 4);
+        byte[] excelData = reportsService.exportStagesByYear(Integer.parseInt(year));
         ByteArrayResource resource = new ByteArrayResource(excelData);
         
         return ResponseEntity.ok()

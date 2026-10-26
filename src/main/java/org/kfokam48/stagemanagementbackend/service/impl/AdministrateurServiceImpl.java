@@ -4,15 +4,13 @@ import org.kfokam48.stagemanagementbackend.dto.administrateur.AdministrateurDTO;
 import org.kfokam48.stagemanagementbackend.dto.administrateur.AdministrateurResponseDTO;
 import org.kfokam48.stagemanagementbackend.dto.administrateur.AdministrateurUpdateDTO;
 import org.kfokam48.stagemanagementbackend.enums.Roles;
-import org.kfokam48.stagemanagementbackend.exception.ResourceAlreadyExistException;
 import org.kfokam48.stagemanagementbackend.exception.RessourceNotFoundException;
 import org.kfokam48.stagemanagementbackend.mapper.AdministrateurMappeur;
 import org.kfokam48.stagemanagementbackend.model.Administrateur;
 import org.kfokam48.stagemanagementbackend.repository.AdministrateurRepository;
-import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
 import org.kfokam48.stagemanagementbackend.service.AdministrateurService;
+import org.kfokam48.stagemanagementbackend.service.auth.CurrentUserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,14 +21,16 @@ import java.util.List;
 public class AdministrateurServiceImpl implements AdministrateurService {
     private final AdministrateurRepository administrateurRepository;
     private final AdministrateurMappeur administrateurMappeur;
-    private final UtilisateurRepository utilisateurRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final UserAccountHelper userAccountHelper;
+    private final CurrentUserService currentUserService;
 
 
-    public AdministrateurServiceImpl(AdministrateurRepository administrateurRepository, AdministrateurMappeur administrateurMappeur, UtilisateurRepository utilisateurRepository) {
+    public AdministrateurServiceImpl(AdministrateurRepository administrateurRepository, AdministrateurMappeur administrateurMappeur,
+                                     UserAccountHelper userAccountHelper, CurrentUserService currentUserService) {
         this.administrateurRepository = administrateurRepository;
         this.administrateurMappeur = administrateurMappeur;
-        this.utilisateurRepository = utilisateurRepository;
+        this.userAccountHelper = userAccountHelper;
+        this.currentUserService = currentUserService;
     }
 
     @Override
@@ -42,13 +42,9 @@ public class AdministrateurServiceImpl implements AdministrateurService {
 
     @Override
     public AdministrateurResponseDTO createAdministrateur(AdministrateurDTO administrateurDTO) {
-        if (utilisateurRepository.existsByEmail(administrateurDTO.getEmail())) {
-            throw new RessourceNotFoundException("User already exists with this email");
-        }
-
         Administrateur administrateur = administrateurMappeur.adminsitrateurDTOToAdministrateur(administrateurDTO);
+        userAccountHelper.prepareNewAccount(administrateur, administrateurDTO);
         administrateur.setRole(Roles.ADMIN);
-        administrateur.setPassword(passwordEncoder.encode(administrateurDTO.getPassword()));
         administrateurRepository.save(administrateur);
         return administrateurMappeur.administrateurToAdministareurReponseDTO(administrateur);
     }
@@ -58,30 +54,22 @@ public class AdministrateurServiceImpl implements AdministrateurService {
         Administrateur administrateur = administrateurRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Administrateur not found"));
 
-        if(administrateurUpdateDTO.getEmail() != null && !administrateurUpdateDTO.getEmail().equals(administrateur.getEmail())) {
-            if (utilisateurRepository.existsByEmail(administrateurUpdateDTO.getEmail())) {
-                throw new ResourceAlreadyExistException("User already exists with this email");
-            }
-        }
-
-        administrateur.setEmail(administrateurUpdateDTO.getEmail());
-        administrateur.setFullName(administrateurUpdateDTO.getFullName());
-        administrateur.setPassword(passwordEncoder.encode(administrateurUpdateDTO.getPassword()));
-        administrateur.setTelephone(administrateurUpdateDTO.getTelephone());
-        administrateur.setAvatar(administrateurUpdateDTO.getAvatar());
+        userAccountHelper.applyCommonUpdates(administrateur, administrateurUpdateDTO);
         administrateur.setRole(Roles.ADMIN);
         administrateurRepository.save(administrateur);
-
-        //administrateur = administrateurMappeur.administrateurUpdateDTOToAdministrateur(administrateurUpdateDTO);
         return administrateurMappeur.administrateurToAdministareurReponseDTO(administrateur);
-
-
     }
 
     @Override
     public ResponseEntity<String> deleteAdministrateur(Long id) {
         Administrateur administrateur = administrateurRepository.findById(id)
                 .orElseThrow(() -> new RessourceNotFoundException("Administrateur not found"));
+        if (administrateur.getId().equals(currentUserService.getCurrentUserId())) {
+            throw new IllegalStateException("Un administrateur ne peut pas supprimer son propre compte");
+        }
+        if (administrateurRepository.count() <= 1) {
+            throw new IllegalStateException("Impossible de supprimer le dernier administrateur");
+        }
         administrateurRepository.delete(administrateur);
         return ResponseEntity.ok("Administrateur deleted successfully");
     }

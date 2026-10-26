@@ -8,3 +8,5 @@ uploads/
 Conception/
 *.log
 .DS_Store
+*.env
+

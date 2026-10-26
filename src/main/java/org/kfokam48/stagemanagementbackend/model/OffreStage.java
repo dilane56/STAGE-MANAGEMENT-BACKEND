@@ -3,6 +3,8 @@ package org.kfokam48.stagemanagementbackend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +41,9 @@ public class OffreStage {
   //  @JoinColumn(name = "entreprise_id")
     private Entreprise entreprise;
 
+    // Exclus de toString/equals/hashCode : évite une récursion infinie OffreStage <-> Candidature
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "offreStage")
     private List<Candidature> candidatures = new ArrayList<>();
 }

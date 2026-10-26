@@ -3,8 +3,6 @@ package org.kfokam48.stagemanagementbackend.controlleur;
 
 import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseDTO;
 import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseReponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.entreprise.EntrepriseUpdateDTO;
-import org.kfokam48.stagemanagementbackend.service.EntrepriseService;
 import org.kfokam48.stagemanagementbackend.service.impl.EntrepriseServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,25 +21,25 @@ public class EntrepriseController {
     }
 
 
-    // ✅ Récupérer une entreprise par ID
+    // ✅ Récupérer une entreprise par ID (l'entreprise elle-même ou un admin)
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN') ")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ENTREPRISE') and #id == authentication.principal.id)")
     public ResponseEntity<EntrepriseReponseDTO> getEntrepriseById(@PathVariable Long id) {
         EntrepriseReponseDTO entreprise = entrepriseService.getEntrepriseById(id);
         return ResponseEntity.ok(entreprise);
     }
 
-    // ✅ Créer une entreprise
+    // ✅ Créer une entreprise (réservé à l'administrateur)
     @PostMapping
-    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntrepriseReponseDTO> creerEntreprise(@RequestBody EntrepriseDTO entrepriseDTO) {
         EntrepriseReponseDTO entreprise = entrepriseService.creerEntreprise(entrepriseDTO);
         return ResponseEntity.ok(entreprise);
     }
 
-    // ✅ Modifier une entreprise
+    // ✅ Modifier une entreprise (l'entreprise elle-même ou un admin)
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ENTREPRISE') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ENTREPRISE') and #id == authentication.principal.id)")
     public ResponseEntity<EntrepriseReponseDTO> modifierEntreprise(
             @PathVariable Long id,
             @RequestBody EntrepriseDTO entrepriseUpdateDTO) {

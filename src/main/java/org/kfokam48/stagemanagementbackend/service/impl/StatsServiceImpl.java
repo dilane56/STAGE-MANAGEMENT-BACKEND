@@ -3,11 +3,13 @@ package org.kfokam48.stagemanagementbackend.service.impl;
 import org.kfokam48.stagemanagementbackend.dto.stats.*;
 import org.kfokam48.stagemanagementbackend.enums.StatutCandidature;
 import org.kfokam48.stagemanagementbackend.enums.StatutConvention;
+import org.kfokam48.stagemanagementbackend.model.Enseignant;
 import org.kfokam48.stagemanagementbackend.repository.*;
 import org.kfokam48.stagemanagementbackend.service.StatsService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,21 +22,23 @@ public class StatsServiceImpl implements StatsService {
     private final ConventionStageRepository conventionRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final EntrepriseRepository entrepriseRepository;
+    private final EnseignantRepository enseignantRepository;
 
-    public StatsServiceImpl(OffreStageRepository offreStageRepository, CandidatureRepository candidatureRepository, 
+    public StatsServiceImpl(OffreStageRepository offreStageRepository, CandidatureRepository candidatureRepository,
                            ConventionStageRepository conventionRepository, UtilisateurRepository utilisateurRepository,
-                           EntrepriseRepository entrepriseRepository) {
+                           EntrepriseRepository entrepriseRepository, EnseignantRepository enseignantRepository) {
         this.offreStageRepository = offreStageRepository;
         this.candidatureRepository = candidatureRepository;
         this.conventionRepository = conventionRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.entrepriseRepository = entrepriseRepository;
+        this.enseignantRepository = enseignantRepository;
     }
 
     @Override
     public EtudiantStatsDTO getEtudiantStats(Long etudiantId) {
         EtudiantStatsDTO stats = new EtudiantStatsDTO();
-        stats.setAvailableInternships(offreStageRepository.count());
+        stats.setAvailableInternships(offreStageRepository.countOpenOffers(LocalDateTime.now()));
         stats.setMyApplications(candidatureRepository.countByEtudiantId(etudiantId));
         stats.setAcceptedApplications(candidatureRepository.countByEtudiantIdAndStatut(etudiantId, StatutCandidature.ACCEPTE));
         stats.setPendingApplications(candidatureRepository.countByEtudiantIdAndStatut(etudiantId, StatutCandidature.EN_ATTENTE));
@@ -55,7 +59,11 @@ public class StatsServiceImpl implements StatsService {
     public EnseignantStatsDTO getEnseignantStats(Long enseignantId) {
         EnseignantStatsDTO stats = new EnseignantStatsDTO();
         stats.setTotalConventions(conventionRepository.countByEnseignantValideurId(enseignantId));
-        stats.setPendingConventions(conventionRepository.countByEnseignantValideurIdAndStatutConvention(enseignantId, StatutConvention.EN_ATTENTE));
+        // Une convention en attente n'a pas encore de valideur : on compte celles de la filière de l'enseignant
+        // (l'ancien calcul sur enseignantValideur renvoyait toujours 0)
+        String filiere = enseignantRepository.findById(enseignantId).map(Enseignant::getFiliere).orElse(null);
+        stats.setPendingConventions(filiere == null ? 0L
+                : conventionRepository.countConventionStageByCandidature_Etudiant_FiliereAndStatutConvention(filiere, StatutConvention.EN_ATTENTE));
         stats.setStudentsFollowed(conventionRepository.countDistinctStudentsByEnseignantId(enseignantId));
         stats.setCompletedInternships(conventionRepository.countByEnseignantValideurIdAndStatutConvention(enseignantId, StatutConvention.APPROUVE));
         return stats;
@@ -68,7 +76,8 @@ public class StatsServiceImpl implements StatsService {
         stats.setTotalCompanies(entrepriseRepository.count());
         stats.setTotalInternships(offreStageRepository.count());
         stats.setTotalConventions(conventionRepository.count());
-        stats.setActiveInternships(offreStageRepository.count()); // Ajuster selon statut
+        // Offres dont la date limite de candidature n'est pas dépassée (auparavant : toutes les offres)
+        stats.setActiveInternships(offreStageRepository.countOpenOffers(LocalDateTime.now()));
         stats.setPendingConventions(conventionRepository.countByStatutConvention(StatutConvention.EN_ATTENTE));
         return stats;
     }

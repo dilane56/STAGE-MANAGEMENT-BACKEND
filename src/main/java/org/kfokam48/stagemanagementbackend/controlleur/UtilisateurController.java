@@ -29,16 +29,13 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateur);
     }
 
+    // ✅ Récupérer un utilisateur par email (son propre compte, ou n'importe lequel pour un admin)
     @GetMapping("/email/{email}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ETUDIANT') or hasRole('ENTREPRISE') or hasRole('ENSEIGNANT')")
+    @PreAuthorize("hasRole('ADMIN') or #email == authentication.principal.username")
     public ResponseEntity<UtilisateurResponseDTO> getUtilisateurByEmail(@PathVariable String email) {
         UtilisateurResponseDTO utilisateur = utilisateurService.getUtilisateurByEmail(email);
         return ResponseEntity.ok(utilisateur);
     }
-
-
-
-
 
     // ✅ Récupérer la liste des utilisateurs
     @GetMapping
@@ -62,23 +59,34 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateurService.existsByEmail(email));
     }
 
+    // ✅ Tous les contacts (messagerie de l'administrateur)
     @GetMapping("/contacts")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Contact>> getAllContacts() {
         List<Contact> contacts = utilisateurService.findAllContacts();
         return new ResponseEntity<>(contacts, HttpStatus.OK);
     }
 
     @GetMapping("/contacts/entreprise/{id}")
-    @PreAuthorize("hasRole('ENTREPRISE')")
+    @PreAuthorize("hasRole('ENTREPRISE') and #id == authentication.principal.id")
     public ResponseEntity<List<Contact>> getEntrepriseContacts( @PathVariable Long id) {
         List<Contact> contacts = utilisateurService.findAllEntrepriseContacts(id);
         return new ResponseEntity<>(contacts, HttpStatus.OK);
     }
 
     @GetMapping("/contacts/candidat/{id}")
-    @PreAuthorize("hasRole('ETUDIANT')")
+    @PreAuthorize("hasRole('ETUDIANT') and #id == authentication.principal.id")
     public ResponseEntity<List<Contact>> getCandidatContacts(@PathVariable Long id) {
         List<Contact> contacts = utilisateurService.findAllCandidatContact(id);
+        return new ResponseEntity<>(contacts, HttpStatus.OK);
+    }
+
+    // ✅ Nouveau : contacts d'un enseignant (étudiants de sa filière + administrateurs).
+    // Le frontend appelait déjà cet endpoint qui n'existait pas (erreur 404 dans la messagerie enseignant).
+    @GetMapping("/contacts/enseignant/{id}")
+    @PreAuthorize("hasRole('ENSEIGNANT') and #id == authentication.principal.id")
+    public ResponseEntity<List<Contact>> getEnseignantContacts(@PathVariable Long id) {
+        List<Contact> contacts = utilisateurService.findAllEnseignantContacts(id);
         return new ResponseEntity<>(contacts, HttpStatus.OK);
     }
 }

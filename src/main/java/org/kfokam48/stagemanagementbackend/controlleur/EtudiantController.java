@@ -4,7 +4,6 @@ package org.kfokam48.stagemanagementbackend.controlleur;
 
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantDTO;
 import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantResponseDTO;
-import org.kfokam48.stagemanagementbackend.dto.etudiant.EtudiantUpdateDTO;
 import org.kfokam48.stagemanagementbackend.service.impl.EtudiantserviceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,25 +22,25 @@ public class EtudiantController {
     }
 
 
-    // ✅ Récupérer un étudiant par ID
+    // ✅ Récupérer un étudiant par ID (l'étudiant lui-même ou un admin)
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ETUDIANT') and #id == authentication.principal.id)")
     public ResponseEntity<EtudiantResponseDTO> getEtudiantById(@PathVariable Long id) {
         EtudiantResponseDTO etudiant = etudiantService.getEtudiantById(id);
         return ResponseEntity.ok(etudiant);
     }
 
-    // ✅ Créer un étudiant
+    // ✅ Créer un étudiant (réservé à l'administrateur)
     @PostMapping
-    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EtudiantResponseDTO> createEtudiant(@RequestBody EtudiantDTO etudiantDTO) {
         EtudiantResponseDTO etudiant = etudiantService.createEtudiant(etudiantDTO);
         return ResponseEntity.ok(etudiant);
     }
 
-    // ✅ Mettre à jour un étudiant
+    // ✅ Mettre à jour un étudiant (l'étudiant lui-même ou un admin)
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ETUDIANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ETUDIANT') and #id == authentication.principal.id)")
     public ResponseEntity<EtudiantResponseDTO> updateEtudiant(
             @PathVariable Long id,
             @RequestBody EtudiantDTO etudiantDTO) {
@@ -64,8 +63,9 @@ public class EtudiantController {
         return ResponseEntity.ok(etudiants);
     }
 
+    // ✅ Étudiants de la filière d'un enseignant (l'enseignant lui-même ou un admin)
     @GetMapping("/enseignant/{enseignantId}")
-    @PreAuthorize("hasRole('ENSEIGNANT') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('ENSEIGNANT') and #enseignantId == authentication.principal.id)")
     public ResponseEntity<List<EtudiantResponseDTO>> getEtudiantsByEnseignant(@PathVariable Long enseignantId) {
         List<EtudiantResponseDTO> etudiants = etudiantService.getEtudiantsByEnseignant(enseignantId);
         return ResponseEntity.ok(etudiants);

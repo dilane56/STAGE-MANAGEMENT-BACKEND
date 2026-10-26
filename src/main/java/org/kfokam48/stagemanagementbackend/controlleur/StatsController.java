@@ -1,12 +1,9 @@
 package org.kfokam48.stagemanagementbackend.controlleur;
 
-import org.kfokam48.stagemanagementbackend.dto.stats.*;
-import org.kfokam48.stagemanagementbackend.enums.Roles;
-import org.kfokam48.stagemanagementbackend.model.Utilisateur;
-import org.kfokam48.stagemanagementbackend.repository.UtilisateurRepository;
+import org.kfokam48.stagemanagementbackend.model.auth.CustomUserDetails;
 import org.kfokam48.stagemanagementbackend.service.StatsService;
+import org.kfokam48.stagemanagementbackend.service.auth.CurrentUserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -17,18 +14,17 @@ import java.util.Map;
 public class StatsController {
 
     private final StatsService statsService;
-    private final UtilisateurRepository utilisateurRepository;
+    private final CurrentUserService currentUserService;
 
-    public StatsController(StatsService statsService, UtilisateurRepository utilisateurRepository) {
+    public StatsController(StatsService statsService, CurrentUserService currentUserService) {
         this.statsService = statsService;
-        this.utilisateurRepository = utilisateurRepository;
+        this.currentUserService = currentUserService;
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<Map<String, Object>> getDashboardStats(Authentication authentication) {
-        String email = authentication.getName();
-        Utilisateur user = utilisateurRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<Map<String, Object>> getDashboardStats() {
+        // L'utilisateur est déjà chargé par le filtre JWT : plus de requête supplémentaire ni de RuntimeException
+        CustomUserDetails user = currentUserService.getCurrentUser();
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,10 +24,14 @@ public interface OffreStageRepository extends JpaRepository<OffreStage, Long> {
     List<OffreStage> findOffreStageBySecteur(Secteur secteur);
     List<OffreStage> findByEntrepriseId(Long entrepriseId);
     Long countByEntrepriseId(Long entrepriseId);
-    
+
+    // Offres encore ouvertes aux candidatures (date limite non dépassée ou non renseignée)
+    @Query("SELECT COUNT(o) FROM OffreStage o WHERE o.dateLimiteCandidature IS NULL OR o.dateLimiteCandidature >= :now")
+    Long countOpenOffers(@Param("now") LocalDateTime now);
+
     @Query("SELECT EXTRACT(MONTH FROM o.datePublication) as month, COUNT(o) FROM OffreStage o WHERE EXTRACT(YEAR FROM o.datePublication) = EXTRACT(YEAR FROM CURRENT_DATE) GROUP BY EXTRACT(MONTH FROM o.datePublication) ORDER BY month")
     List<Object[]> countInternshipsByMonth();
-    
+
     @Query("SELECT s.nomSecteur, COUNT(o) FROM OffreStage o JOIN o.secteur s GROUP BY s.nomSecteur ORDER BY COUNT(o) DESC")
     List<Object[]> countInternshipsBySector();
 }
